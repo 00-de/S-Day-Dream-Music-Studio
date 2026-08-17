@@ -283,6 +283,13 @@ textarea{resize:vertical}
             <div class="gauge"><div class="k">TIME</div><div class="v"><select id="f-meter"><option>4/4</option><option>3/4</option><option>6/8</option></select></div><div class="s">拍子</div></div>
           </div>
           <label class="f"><span>BPM <b class="mono" id="v-bpm">128</b></span><input type="range" id="f-bpm" min="40" max="240" value="128"></label>
+          <label class="f"><span>音質（書き出し時間が変わります）</span>
+            <select id="f-quality">
+              <option value="draft" selected>下書き ／ 速い</option>
+              <option value="normal">標準</option>
+              <option value="high">高音質 ／ 遅い</option>
+            </select></label>
+          <p class="hint" id="qhint" style="margin:-6px 0 10px"></p>
           <button class="btn cy wide" id="btn-gen" style="margin-bottom:8px">この設定で曲を作る</button>
           <button class="btn wide" id="btn-remix" disabled style="margin-bottom:14px">ミックスを反映</button>
 
@@ -412,7 +419,7 @@ textarea{resize:vertical}
   <div style="height:20px"></div>
 </div>
 
-<div id="gen"><div class="in"><h2>GENERATING</h2><div class="bar"><i id="genbar"></i></div><div class="mono" id="genstep">—</div></div></div>
+<div id="gen"><div class="in"><h2>GENERATING</h2><div class="bar"><i id="genbar"></i></div><div class="mono" id="genstep">—</div><div class="mono" id="genelapsed" style="font-size:11px;color:var(--dim);margin-top:6px"></div></div></div>
 <div id="errbox"><div class="in">
   <h3>生成エラーの内容</h3>
   <p class="hint">この内容をコピーして送ってもらえれば原因を特定できます。</p>

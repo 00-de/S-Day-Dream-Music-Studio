@@ -202,6 +202,11 @@ function renderTrackRail(){
   S.orch.slice(0,8).forEach(n=>add(ORCH[n].g,n.length>6?n.slice(0,5)+"…":n,ORCH[n].c,true));
   S.mand.forEach(n=>add(MAND[n].g,n.length>6?n.slice(0,5)+"…":n,MAND[n].c,true));
 }
+$("#f-quality").onchange=()=>{
+  const q=$("#f-quality").value;
+  $("#qhint").textContent={draft:"速い・確認用（22kHz／音数半分／残響なし）",
+    normal:"ふつう（44.1kHz／残響あり）",high:"高音質・時間がかかります"}[q];
+};
 $("#btn-random").onclick=()=>{
   applyPreset(pick(Object.keys(PRESETS)));
   $("#f-title").value=pick(["夜明けのリハーサル","坂道のワルツ","七月の合図","風になる前に","声が届く場所"]);
@@ -397,23 +402,25 @@ function playNote(ctx,dest,type,midi,t,dur,vel,extra){
   const osc=(wave,detune,gain)=>{const o=ctx.createOscillator();o.type=wave;o.frequency.value=f;
     if(detune)o.detune.value=detune;const og=ctx.createGain();og.gain.value=gain;o.connect(og);return {o,og};};
 
+  const SIMPLE=!!(extra&&extra.simple);
   if(type.startsWith("voice:")){
     const m=MEMBERS[type.split(":")[1]]||MEMBERS["結衣"], vx=m.vox;
-    const mix=ctx.createGain(); mix.gain.value=.5;
-    [0,-7,7].forEach((dt,i)=>{const {o,og}=osc("sawtooth",dt,i?.35:.7);o.connect(og);og.connect(mix);
+    const mix=ctx.createGain(); mix.gain.value=SIMPLE?.8:.5;
+    (SIMPLE?[0]:[0,-7,7]).forEach((dt,i)=>{const {o,og}=osc("sawtooth",dt,i?.35:.7);o.connect(og);og.connect(mix);
       const lfo=ctx.createOscillator(),la=ctx.createGain();
       lfo.frequency.value=vx.vib+(vx.kobushi?Math.sin(t*3)*1.5:0); la.gain.value=f*(vx.kobushi?.016:.008);
       lfo.connect(la); la.connect(o.frequency); lfo.start(t); lfo.stop(t+dur+.4);
       o.start(t); o.stop(t+dur+.35);});
     // フォルマント（3バンド）
     let last=mix;
-    vx.formant.forEach((fr,i)=>{
+    (SIMPLE?vx.formant.slice(0,1):vx.formant).forEach((fr,i)=>{
       const bp=ctx.createBiquadFilter(); bp.type="peaking"; bp.frequency.value=fr*vx.bright; bp.Q=6; bp.gain.value=10-i*2;
       last.connect(bp); last=bp;
     });
     const lp=ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=3600*vx.bright; lp.Q=.7;
     last.connect(lp); lp.connect(g);
-    // ブレス
+    // ブレス（下書きでは省略）
+    if(SIMPLE){ env(g,t,.055,.12,.82,.28,dur,v*.5); return; }
     const nb=ctx.createBufferSource(); nb.buffer=NB; nb.loop=true;
     const nf=ctx.createBiquadFilter(); nf.type="bandpass"; nf.frequency.value=2400; nf.Q=.8;
     const ng=ctx.createGain(); ng.gain.value=0;
@@ -450,7 +457,7 @@ function playNote(ctx,dest,type,midi,t,dur,vel,extra){
     }
     case "egtr": case "agtr": case "mand": case "harp":{
       const tremolo=(type==="mand");
-      const reps=tremolo?Math.max(1,Math.round(dur*11)):1;
+      const reps=tremolo?Math.max(1,Math.round(dur*(SIMPLE?5:11))):1;
       for(let r=0;r<reps;r++){
         const tt=t+r*(dur/reps), dd=dur/reps;
         const gg=ctx.createGain(); gg.connect(g);
@@ -466,7 +473,7 @@ function playNote(ctx,dest,type,midi,t,dur,vel,extra){
     }
     case "piano":{
       const gg=ctx.createGain(); gg.connect(g);
-      [[1,.6,"triangle"],[2,.18,"sine"],[3,.08,"sine"]].forEach(([h,a,w])=>{
+      (SIMPLE?[[1,.65,"triangle"]]:[[1,.6,"triangle"],[2,.18,"sine"],[3,.08,"sine"]]).forEach(([h,a,w])=>{
         const o=ctx.createOscillator(); o.type=w; o.frequency.value=f*h;
         const og2=ctx.createGain(); og2.gain.value=a; o.connect(og2); og2.connect(gg);
         o.start(t); o.stop(t+dur+.5);
@@ -475,15 +482,15 @@ function playNote(ctx,dest,type,midi,t,dur,vel,extra){
     }
     case "pad":{
       const gg=ctx.createGain(); gg.connect(g);
-      [-8,0,8].forEach(dt=>{const o=ctx.createOscillator();o.type="sawtooth";o.frequency.value=f;o.detune.value=dt;
+      (SIMPLE?[0]:[-8,0,8]).forEach(dt=>{const o=ctx.createOscillator();o.type="sawtooth";o.frequency.value=f;o.detune.value=dt;
         const og2=ctx.createGain();og2.gain.value=.22;o.connect(og2);og2.connect(gg);o.start(t);o.stop(t+dur+.4);});
       const lp=ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=2200; gg.connect(lp); lp.connect(g);
       env(gg,t,.12,.2,.8,.35,dur,v*.3); env(g,t,.001,.01,1,.02,dur,1); return;
     }
     case "bow":{
       const o=ctx.createOscillator(); o.type="sawtooth"; o.frequency.value=f;
-      const lfo=ctx.createOscillator(), la=ctx.createGain(); lfo.frequency.value=5.1; la.gain.value=f*.006;
-      lfo.connect(la); la.connect(o.frequency); lfo.start(t); lfo.stop(t+dur+.3);
+      if(!SIMPLE){const lfo=ctx.createOscillator(), la=ctx.createGain(); lfo.frequency.value=5.1; la.gain.value=f*.006;
+      lfo.connect(la); la.connect(o.frequency); lfo.start(t); lfo.stop(t+dur+.3);}
       const lp=ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=2600; lp.Q=1.2;
       o.connect(lp); lp.connect(g);
       env(g,t,.09,.1,.85,.3,dur,v*.3); o.start(t); o.stop(t+dur+.3); return;
@@ -503,9 +510,10 @@ function playNote(ctx,dest,type,midi,t,dur,vel,extra){
     }
     case "flute":{
       const o=ctx.createOscillator(); o.type="sine"; o.frequency.value=f;
-      const lfo=ctx.createOscillator(), la=ctx.createGain(); lfo.frequency.value=5.6; la.gain.value=f*.005;
-      lfo.connect(la); la.connect(o.frequency); lfo.start(t); lfo.stop(t+dur+.3);
+      if(!SIMPLE){const lfo=ctx.createOscillator(), la=ctx.createGain(); lfo.frequency.value=5.6; la.gain.value=f*.005;
+      lfo.connect(la); la.connect(o.frequency); lfo.start(t); lfo.stop(t+dur+.3);}
       o.connect(g);
+      if(SIMPLE){ env(g,t,.07,.08,.9,.22,dur,v*.3); o.start(t); o.stop(t+dur+.3); return; }
       const nb=ctx.createBufferSource(); nb.buffer=NB; nb.loop=true;
       const hp=ctx.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=3000;
       const ng=ctx.createGain(); ng.gain.value=v*.03; nb.connect(hp); hp.connect(ng); ng.connect(g);
@@ -553,8 +561,12 @@ async function renderSong(song,onStep,opt){
   outGain.gain.value=Math.pow(10,parseFloat($("#set-master").value)/20);
   master.connect(hp); hp.connect(eqLo); eqLo.connect(eqHi); eqHi.connect(comp); comp.connect(limit); limit.connect(outGain); outGain.connect(ctx.destination);
 
-  const rev=ctx.createConvolver(); rev.buffer=reverbImpulse(ctx,2.4,2.6);
-  const revGain=ctx.createGain(); revGain.gain.value=.9; rev.connect(revGain); revGain.connect(master);
+  // 残響：畳み込みは曲全体にかかるので下書きでは短く／省く
+  let rev=null;
+  if(!opt.noReverb){
+    rev=ctx.createConvolver(); rev.buffer=reverbImpulse(ctx,opt.revSec||2.4,2.6);
+    const revGain=ctx.createGain(); revGain.gain.value=.9; rev.connect(revGain); revGain.connect(master);
+  }
 
   let tracks=song.tracks;
   if(opt.essentialOnly)
@@ -565,17 +577,26 @@ async function renderSong(song,onStep,opt){
     const g=ctx.createGain(); g.gain.value=st.vol;
     const p=ctx.createStereoPanner(); p.pan.value=clamp(st.pan,-1,1);
     g.connect(p); p.connect(master);
-    const sendG=ctx.createGain(); sendG.gain.value=st.rev; p.connect(sendG); sendG.connect(rev);
+    if(rev){ const sendG=ctx.createGain(); sendG.gain.value=st.rev; p.connect(sendG); sendG.connect(rev); }
     const notes=opt.stride>1?tr.notes.filter((_,i)=>i%opt.stride===0):tr.notes;
     notes.forEach(n=>{
       const t0=n.beat*beat+.05, d=Math.max(.06,n.dur*beat), m=Math.round(n.midi);
       if(!isFinite(t0)||!isFinite(d)||!isFinite(m)||m<0||m>127||t0>=dur) return;
-      try{ playNote(ctx,g,tr.type,m,t0,d,clamp(n.vel||.5,.05,1),{noise:NB}); }
+      try{ playNote(ctx,g,tr.type,m,t0,d,clamp(n.vel||.5,.05,1),{noise:NB,simple:!!opt.simple}); }
       catch(err){ S._noteErrors++; if(!S._lastErr) S._lastErr=err; }
     });
   });
   if(onStep) onStep("書き出し");
-
+  // 途中で止めて進捗を返す（対応していないブラウザでは黙って通常処理）
+  if(opt.onProg){
+    try{
+      const N=10;
+      for(let i=1;i<N;i++){
+        const at=dur*i/N;
+        ctx.suspend(at).then(()=>{ opt.onProg(i/N); ctx.resume(); }).catch(()=>{});
+      }
+    }catch(e){}
+  }
   return await ctx.startRendering();
 }
 
@@ -616,12 +637,29 @@ $("#btn-gen").onclick=async()=>{
     const song={cfg,plan,tracks,melody,chords,lyricLines:lines,id:"s"+Date.now(),fav:false};
     S.mixer={}; tracks.forEach(t=>S.mixer[t.name]={vol:t.vol,pan:t.pan,rev:t.rev});
     $("#genstep").textContent=steps[6]; $("#genbar").style.width="80%";
-    const attempts=[{},{sr:44100,stride:2},{sr:22050,stride:2,essentialOnly:true}];
+    const QP={
+      draft:{sr:22050,stride:2,simple:true,noReverb:true},
+      normal:{stride:1,revSec:2.0},
+      high:{stride:1,revSec:2.6}
+    };
+    const q=$("#f-quality").value;
+    const base=QP[q]||QP.normal;
+    const attempts=[base,
+      Object.assign({},base,{sr:22050,stride:2,simple:true,noReverb:true}),
+      {sr:22050,stride:3,simple:true,noReverb:true,essentialOnly:true}];
     let buf=null, lastErr=null;
     for(let a=0;a<attempts.length;a++){
       try{
         if(a>0) $("#genstep").textContent="軽い設定で再試行（"+a+"回目）";
-        buf=await renderSong(song,x=>{$("#genstep").textContent=x;},attempts[a]);
+        const t0=Date.now();
+        clearInterval(S._tick);
+        S._tick=setInterval(()=>{ $("#genelapsed").textContent=((Date.now()-t0)/1000).toFixed(1)+" 秒"; },100);
+        const o=Object.assign({},attempts[a],{onProg:r=>{
+          $("#genbar").style.width=(80+r*20)+"%";
+          $("#genstep").textContent="音を書き出しています "+Math.round(r*100)+"%";
+        }});
+        buf=await renderSong(song,x=>{$("#genstep").textContent=x;},o);
+        clearInterval(S._tick);
         if(a>0) toast("軽い設定で書き出しました（楽器や音数を減らしています）");
         break;
       }catch(err){ console.error("render attempt",a,err); lastErr=err; }
@@ -638,13 +676,16 @@ $("#btn-gen").onclick=async()=>{
       band:cfg.band.length,orch:cfg.orch.length,mand:cfg.mand.length,
       noteErrors:S._noteErrors||0});
   }finally{
-    $("#gen").classList.remove("on"); $("#genbar").style.width="0";
+    clearInterval(S._tick);
+    $("#gen").classList.remove("on"); $("#genbar").style.width="0"; $("#genelapsed").textContent="";
   }
 };
 $("#btn-remix").onclick=async()=>{
   if(!S.song)return;
   $("#gen").classList.add("on"); $("#genstep").textContent="ミックスを反映"; $("#genbar").style.width="60%"; status("MIXING",true);
-  try{ S.buffer=await renderSong(S.song); afterRender(); toast("ミックスを反映しました"); status("READY",false); }
+  try{ const q=$("#f-quality").value;
+    const QP={draft:{sr:22050,stride:2,simple:true,noReverb:true},normal:{stride:1,revSec:2.0},high:{stride:1,revSec:2.6}};
+    S.buffer=await renderSong(S.song,null,QP[q]||QP.normal); afterRender(); toast("ミックスを反映しました"); status("READY",false); }
   catch(e){ toast("反映に失敗しました"); status("ERROR",false); }
   finally{ $("#gen").classList.remove("on"); $("#genbar").style.width="0"; }
 };
@@ -1061,4 +1102,4 @@ function renderList(sel,items){
 $("#lyricEdit").value="夕暮れの坂道 君の影が伸びる\nあと少しだけ このままでいたいよ\n名前を呼ぶ声が 風にほどけていく\n忘れないよ この夏のこと";
 $("#f-title").value="七月の合図";
 $("#f-theme").value="夏の終わり";
-updateGauges(); renderTrackRail(); renderPickSummary(); drawViz(0); drawMvFrame(0); status("STANDBY",false);
+updateGauges(); renderTrackRail(); renderPickSummary(); $("#f-quality").onchange(); drawViz(0); drawMvFrame(0); status("STANDBY",false);
