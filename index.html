@@ -184,6 +184,26 @@ textarea{resize:vertical}
 #scrim{position:fixed;inset:0;z-index:45;background:rgba(3,6,12,.6);display:none}
 #scrim.on{display:block}
 
+/* SUNO プロンプト画面 */
+#s-suno .wrap{display:grid;grid-template-columns:minmax(280px,340px) 1fr;gap:14px;max-width:1280px;margin:0 auto}
+.outblk{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:var(--r);margin-bottom:12px;overflow:hidden}
+.outblk .oh{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);background:#070D19}
+.outblk .oh .btn{padding:5px 11px;font-size:11px;margin-left:auto}
+.outblk pre{margin:0;padding:12px;font-family:"JetBrains Mono",monospace;font-size:11.5px;line-height:1.75;
+  white-space:pre-wrap;word-break:break-word;color:var(--txt);max-height:340px;overflow:auto;user-select:text}
+.outblk pre.jp{font-family:"Zen Kaku Gothic New",sans-serif;font-size:13px;line-height:2}
+.titlelist{display:flex;flex-direction:column;gap:6px;padding:12px}
+.titlelist button{text-align:left;background:#060C18;border:1px solid var(--line);border-radius:8px;padding:9px 12px;
+  font-family:"Shippori Mincho",serif;font-size:15px;color:var(--txt)}
+.titlelist button:hover{border-color:var(--cyan)}
+@media (max-width:900px){#s-suno .wrap{grid-template-columns:1fr}}
+
+.rv{background:#060C18;border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+.rv b{font:700 11px/1.6 "Chakra Petch",sans-serif;letter-spacing:.1em;color:var(--cyan)}
+.rv small{color:var(--dim);margin-left:6px;font-size:10px}
+.rv p{margin:4px 0 0;font-size:12px;line-height:1.75}
+.aibusy{opacity:.5;pointer-events:none}
+
 /* リスト */
 .li{display:flex;gap:10px;align-items:center;padding:11px;border:1px solid var(--line);border-radius:11px;background:var(--panel);margin-bottom:9px}
 .li b{font-family:"Chakra Petch",sans-serif;font-size:14px}
@@ -357,6 +377,107 @@ textarea{resize:vertical}
     <section class="screen" id="s-mv"><div class="hero" style="padding-top:4px"><h1 style="font-size:24px">MVライブラリ</h1><div id="mvList"></div></div></section>
     <section class="screen" id="s-fav"><div class="hero" style="padding-top:4px"><h1 style="font-size:24px">お気に入り</h1><div id="favList"></div></div></section>
 
+    <!-- SUNO プロンプト -->
+    <section class="screen" id="s-suno">
+      <div class="wrap">
+        <div>
+          <div class="card" style="margin-bottom:12px">
+            <h4>Song</h4>
+            <label class="f"><span>曲名（空ならタイトル案から選ぶ）</span><input type="text" id="sp-title" placeholder="七月の合図"></label>
+            <label class="f"><span>テーマ</span><input type="text" id="sp-theme" placeholder="夏の終わり、旅立ち、約束…"></label>
+            <label class="f"><span>入れたい言葉（読点区切り）</span><input type="text" id="sp-words" placeholder="改札, 花火, 白い息"></label>
+            <label class="f"><span>ジャンル</span><select id="sp-genre"></select></label>
+            <div class="row">
+              <label class="f"><span>雰囲気</span><select id="sp-mood">
+                <option>疾走</option><option>やさしい</option><option>壮大</option><option>切ない</option><option>祝祭</option></select></label>
+              <label class="f"><span>言語</span><select id="sp-lang">
+                <option value="ja">日本語</option><option value="mix">日本語＋英語サビ</option><option value="en">英語</option></select></label>
+            </div>
+            <div class="row">
+              <label class="f"><span>BPM <b class="mono" id="sp-vbpm">150</b></span><input type="range" id="sp-bpm" min="40" max="240" value="150"></label>
+            </div>
+            <div class="row">
+              <label class="f"><span>キー</span><select id="sp-key"></select></label>
+              <label class="f"><span>調</span><select id="sp-scale"><option value="major">長調</option><option value="minor">短調</option></select></label>
+              <label class="f"><span>拍子</span><select id="sp-meter"><option>4/4</option><option>3/4</option><option>6/8</option></select></label>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:12px">
+            <h4>Vocal<span class="cnt" id="sp-cnt"></span></h4>
+            <label class="f"><span>歌唱編成</span><select id="sp-mode">
+              <option value="solo">ソロ（1人）</option>
+              <option value="duet" selected>デュエット（2人）</option>
+              <option value="trio">トリオ（3人）</option>
+              <option value="fourth">フォース（4人）</option>
+              <option value="all">全員（6人）</option></select></label>
+            <div class="chips" id="sp-members"></div>
+            <p class="hint" style="margin-top:9px">先に選んだ人がメインボーカルになります。サビは選んだ全員のユニゾンとして書き出します。</p>
+          </div>
+
+          <div class="card" style="margin-bottom:12px">
+            <h4>Structure</h4>
+            <label class="f"><span>構成</span><select id="sp-form">
+              <option value="std">標準（イントロ〜Aメロ〜サビ〜落ちサビ〜大サビ）</option>
+              <option value="short">ショート（1分・SNS向け）</option>
+              <option value="ballad">バラード（ゆっくり展開）</option>
+              <option value="live">ライブ向け（コール＆レスポンス入り）</option></select></label>
+            <label class="f"><span>避けたい要素</span><input type="text" id="sp-neg" placeholder="rap, heavy distortion, autotune"></label>
+          </div>
+
+          <div class="card" style="margin-bottom:12px">
+            <h4>AI アシスト<span class="cnt" id="ai-state">接続確認中…</span></h4>
+            <label class="f"><span>使うAI</span><select id="ai-provider">
+              <option value="">自動（使えるものを順に）</option>
+              <option value="groq">Groq</option>
+              <option value="gemini">Gemini</option>
+              <option value="openai">OpenAI</option></select></label>
+            <div class="chips" style="gap:6px">
+              <button class="btn" id="ai-lyrics">歌詞をAIで書く</button>
+              <button class="btn" id="ai-polish">歌詞を推敲</button>
+              <button class="btn" id="ai-titles">タイトル案</button>
+              <button class="btn" id="ai-style">スタイル文を整える</button>
+              <button class="btn" id="ai-yomi">よみがなを付ける</button>
+              <button class="btn" id="ai-review">AI社員レビュー</button>
+            </div>
+            <p class="hint" id="ai-hint" style="margin-top:9px"></p>
+          </div>
+
+          <button class="btn cy wide" id="sp-gen" style="margin-bottom:8px">プロンプトと歌詞を作る</button>
+          <button class="btn wide" id="sp-re" style="margin-bottom:8px">歌詞だけ作り直す</button>
+          <button class="btn wide" id="sp-rand">おまかせで埋める</button>
+          <p class="hint" style="margin-top:10px">SUNO のカスタムモードで、Style に「SUNO用スタイル」を、Lyrics に「歌詞」を貼り付けてください。</p>
+        </div>
+
+        <div>
+          <div class="outblk">
+            <div class="oh"><span class="lbl">Suno Style Prompt</span><button class="btn" data-copy="#sp-style">コピー</button></div>
+            <pre id="sp-style">左の設定を入れて「プロンプトと歌詞を作る」を押してください。</pre>
+          </div>
+          <div class="outblk">
+            <div class="oh"><span class="lbl">DayDream＋ 専用プロンプト</span><button class="btn" data-copy="#sp-dd">コピー</button></div>
+            <pre id="sp-dd">—</pre>
+          </div>
+          <div class="outblk">
+            <div class="oh"><span class="lbl">Lyrics</span><button class="btn" data-copy="#sp-lyrics">コピー</button></div>
+            <pre id="sp-lyrics" class="jp">—</pre>
+          </div>
+          <div class="outblk">
+            <div class="oh"><span class="lbl">Title 案</span><span class="hint" style="margin-left:auto">押すと曲名に入ります</span></div>
+            <div class="titlelist" id="sp-titles"></div>
+          </div>
+          <div class="outblk">
+            <div class="oh"><span class="lbl">AI社員レビュー</span><span class="hint" id="ai-rvmeta" style="margin-left:auto"></span></div>
+            <div id="ai-reviews" class="titlelist"><span class="hint" style="padding:0 12px 12px">「AI社員レビュー」を押すと4人が講評します。</span></div>
+          </div>
+          <div class="outblk">
+            <div class="oh"><span class="lbl">Exclude Styles</span><button class="btn" data-copy="#sp-exclude">コピー</button></div>
+            <pre id="sp-exclude">—</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 設定 -->
     <section class="screen" id="s-settings">
       <div class="hero" style="padding-top:4px">
@@ -372,8 +493,13 @@ textarea{resize:vertical}
           <p class="hint">Takagi：公開計画／Ota：歌詞レビュー／Nakao：書き出しログ／Shun：反応集計。<br>DayDream AI Company System との接続は Phase 3 です。</p>
         </div>
         <div class="card" style="margin-bottom:12px">
-          <h4>External Services <span class="tag wip">Phase 3 / 4</span></h4>
-          <p class="hint">歌詞アシスト（Groq / Gemini / OpenAI）、歌声合成、画像動画生成、YouTube 投稿は未接続です。APIキーはブラウザに保存せず、Vercel の環境変数からサーバー経由で呼び出す形にします。</p>
+          <h4>External Services</h4>
+          <p class="hint" id="set-ai-state">接続確認中…</p>
+          <p class="hint" style="margin-top:8px">歌詞アシストと AI社員レビューは <span class="tag live">Phase 3</span> として動作します。Vercel の Settings → Environment Variables に
+          <b class="mono">GROQ_API_KEY</b> / <b class="mono">GEMINI_API_KEY</b> / <b class="mono">OPENAI_API_KEY</b> のいずれかを入れてください。
+          キーはサーバー側だけで扱い、ブラウザには渡していません。<br>
+          歌声合成、画像動画生成、YouTube 投稿は <span class="tag wip">Phase 4 / 5</span> です。</p>
+          <button class="btn" id="set-ai-check" style="margin-top:9px">接続を確認</button>
         </div>
         <div class="card">
           <h4>歌声について</h4>

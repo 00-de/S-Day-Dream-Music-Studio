@@ -78,13 +78,13 @@ function mora(line){
 }
 
 /* ---------- 画面切り替え ---------- */
-const SCREENS=[["home","ホーム"],["studio","スタジオ"],["library","ライブラリ"],["playlist","プレイリスト"],["mv","MV"],["fav","お気に入り"],["settings","設定"]];
+const SCREENS=[["home","ホーム"],["studio","スタジオ"],["suno","SUNO"],["library","ライブラリ"],["playlist","プレイリスト"],["mv","MV"],["fav","お気に入り"],["settings","設定"]];
 (function buildNav(){
   const nav=$("#nav");
   SCREENS.forEach(([id,label])=>{
     const b=document.createElement("button");b.textContent=label;b.dataset.id=id;b.onclick=()=>go(id);nav.appendChild(b);
   });
-  const HM=[["studio","新規作成","歌詞から曲を組み立てる"],["library","楽曲ライブラリ","作った曲を並べる"],
+  const HM=[["studio","新規作成","歌詞から曲を組み立てる"],["suno","SUNOプロンプト","貼るだけの指示文と歌詞を作る"],["library","楽曲ライブラリ","作った曲を並べる"],
     ["playlist","プレイリスト","並び順を決める"],["mv","MVライブラリ","映像付きの曲"],
     ["fav","お気に入り","印を付けた曲"],["settings","設定","出力と接続先"]];
   const m=$("#homeMenu");
@@ -1103,3 +1103,354 @@ $("#lyricEdit").value="夕暮れの坂道 君の影が伸びる\nあと少しだ
 $("#f-title").value="七月の合図";
 $("#f-theme").value="夏の終わり";
 updateGauges(); renderTrackRail(); renderPickSummary(); $("#f-quality").onchange(); drawViz(0); drawMvFrame(0); status("STANDBY",false);
+
+/* ==========================================================
+   SUNO プロンプト生成
+   ========================================================== */
+const SP_VOX = {
+  "悠真":{en:"warm mid-range male lead vocal, calm and steady, band leader on keys", jp:"落ち着いた中音域の男性ボーカル、キーボード担当"},
+  "結衣":{en:"bright clear female lead vocal, agile and emotive, main vocalist", jp:"澄んだ高音の女性メインボーカル"},
+  "葵":{en:"husky male vocal with edge, guitar-driven delivery", jp:"かすれ気味で芯のある男性ボーカル、ギター担当"},
+  "蓮":{en:"soft male harmony vocal, airy backing lines", jp:"やわらかい男性ハーモニー、コーラス担当"},
+  "美琴":{en:"enka-style female vocal, deep vibrato and kobushi ornamentation", jp:"演歌調の女性ボーカル、深いビブラートとこぶし"},
+  "大地":{en:"low male backing shouts and chants, drummer", jp:"低音の掛け声とコーラス、ドラム担当"}
+};
+const SP_GENRE = {
+  "アイドルポップ":{en:"Japanese idol pop, J-pop, upbeat group vocals", inst:"electric guitar, bass, drums, bright synth keys"},
+  "バンドロック":{en:"Japanese rock band, J-rock, driving guitars", inst:"distorted electric guitar, bass, live drums"},
+  "バラード":{en:"Japanese pop ballad, emotional and spacious", inst:"grand piano, strings, soft bass, brushed drums"},
+  "夏ソング":{en:"summer J-pop, bright and breezy", inst:"acoustic guitar, bass, drums, marimba, hand claps"},
+  "冬ソング":{en:"winter J-pop, warm and intimate", inst:"piano, strings, glockenspiel, soft bass"},
+  "卒業ソング":{en:"Japanese graduation song, nostalgic and uplifting", inst:"piano, acoustic guitar, strings, drums"},
+  "オーケストラポップ":{en:"orchestral J-pop, cinematic arrangement", inst:"full string section, brass, timpani, harp, piano"},
+  "マンドリンアンサンブル":{en:"mandolin ensemble pop, tremolo-driven", inst:"mandolin, mandola, mandocello, contrabass"},
+  "演歌":{en:"enka, traditional Japanese ballad", inst:"shakuhachi-like flute, strings, mandolin tremolo, upright bass"},
+  "シティポップ":{en:"Japanese city pop, 80s groove", inst:"electric piano, slap bass, clean guitar, gated drums"},
+  "映画音楽":{en:"cinematic score with vocals, epic build", inst:"strings, horns, choir, timpani, piano"},
+  "ライブアンセム":{en:"live anthem J-pop, stadium energy, crowd chants", inst:"electric guitar, bass, drums, brass stabs, synth"}
+};
+const SP_MOOD = {"疾走":"driving, energetic, forward-moving","やさしい":"gentle, warm, tender",
+  "壮大":"grand, sweeping, cinematic","切ない":"bittersweet, wistful, melancholic","祝祭":"celebratory, festive, triumphant"};
+const SP_SIZE = {solo:1,duet:2,trio:3,fourth:4,all:6};
+const SP_SIZE_JP = {solo:"ソロ",duet:"デュエット",trio:"トリオ",fourth:"フォース",all:"全員"};
+
+const SP = { members:["結衣","悠真"], mode:"duet", lyrics:"", titles:[] };
+
+/* ---------- 語彙バンク（歌詞・タイトルの下書き生成用） ---------- */
+const W = {
+  n1:["夕暮れ","改札","坂道","教室","屋上","交差点","潮風","制服","花火","星屑","白い息","蝉時雨",
+      "放課後","傘の中","終電","窓辺","運動場","桜並木","真夜中","朝焼け","河川敷","自転車","踏切","体育館"],
+  n2:["約束","合図","足音","名前","背中","手のひら","まなざし","季節","歌","地図","願い","涙",
+      "記憶","言葉","鼓動","横顔","つづき","答え"],
+  vA:["こぼれ落ちる","ほどけていく","響いて消えた","光っていた","溶けていく","揺れている","にじんでいく","遠ざかる"],
+  vB:["歩いていく","駆け出した","手を振った","立ち止まった","目を閉じた","うつむいた","走り出す","呼んでいる","振り返った"],
+  adj:["まぶしい","小さな","確かな","遠い","あたたかい","静かな","新しい","やわらかい","はじめての"],
+  hook:["君と","二人で","もう一度","この街で","いつまでも","何度でも","ここから"],
+  en:["we run through the light","hold on to this moment","never let it fade",
+      "one more time with you","the summer never ends","say it out loud tonight"]
+};
+
+let _lastT=-1,_lastN="";
+function spLine(theme,words){
+  const kw=()=>words.length?pick(words):pick(W.n1);
+  const t=[
+    ()=>`${pick(W.n1)}の${pick(W.n2)}が ${pick(W.vA)}`,
+    ()=>`${pick(W.adj)}${pick(W.n2)}が ${pick(W.vA)}`,
+    ()=>`${pick(W.n1)}で ${pick(W.hook)}${pick(W.vB)}`,
+    ()=>`${kw()}の向こうで ${pick(W.vB)}`,
+    ()=>`${theme?theme+"の":""}${pick(W.n2)}が ${pick(W.vA)}`,
+    ()=>`${pick(W.n1)} ${pick(W.adj)}${pick(W.n2)}`,
+    ()=>`${pick(W.hook)}${pick(W.vB)} ${kw()}のそばで`
+  ];
+  let i=Math.floor(Math.random()*t.length);
+  if(i===_lastT) i=(i+1+Math.floor(Math.random()*(t.length-1)))%t.length;
+  _lastT=i;
+  let line=t[i]();
+  for(let k=0;k<3&&_lastN&&line.indexOf(_lastN)===0;k++) line=t[i]();
+  _lastN=line.slice(0,3);
+  return line;
+}
+function spHook(theme,words,lang){
+  if(lang==="en") return pick(W.en);
+  const kw=words.length?pick(words):pick(W.n1);
+  return pick([
+    `${pick(W.hook)}${pick(W.vB)}`,
+    `${theme||pick(W.n2)}は ${pick(W.adj)}まま`,
+    `${kw}が ${pick(W.vA)}`,
+    `${pick(W.hook)}${pick(W.adj)}${pick(W.n2)}を`
+  ]);
+}
+function spTitles(theme,words){
+  const out=new Set();
+  while(out.size<5){
+    out.add(pick([
+      `${pick(W.n1)}の${pick(W.n2)}`,
+      `${pick(W.adj)}${pick(W.n2)}`,
+      `${theme||pick(W.n2)}のかけら`,
+      `${words.length?pick(words):pick(W.n1)}まで`,
+      `${pick(W.hook)}${pick(W.n2)}を`
+    ]));
+  }
+  return [...out];
+}
+
+/* ---------- 構成 ---------- */
+const SP_FORM = {
+  std:[["Intro",0],["Verse 1",4],["Pre-Chorus",2],["Chorus",4],["Verse 2",4],["Pre-Chorus",2],["Chorus",4],["Bridge",3],["Final Chorus",4],["Outro",1]],
+  short:[["Intro",0],["Verse 1",3],["Chorus",4],["Outro",1]],
+  ballad:[["Intro",0],["Verse 1",4],["Chorus",4],["Verse 2",4],["Bridge",3],["Final Chorus",5],["Outro",2]],
+  live:[["Intro",0],["Call and Response",2],["Verse 1",4],["Pre-Chorus",2],["Chorus",4],["Call and Response",2],["Final Chorus",4],["Outro",1]]
+};
+
+/* ---------- 生成 ---------- */
+function spBuildLyrics(){
+  const theme=$("#sp-theme").value.trim();
+  const words=$("#sp-words").value.split(/[,、\s]+/).map(s=>s.trim()).filter(Boolean);
+  const lang=$("#sp-lang").value, form=SP_FORM[$("#sp-form").value];
+  const mem=SP.members.length?SP.members:["結衣"];
+  const all=mem.join(" & ");
+  const hook=spHook(theme,words,lang==="en"?"en":"ja");
+  const out=[];
+  let vi=0;
+  form.forEach(([name,lines])=>{
+    if(lines===0){ out.push(`[${name}]`,""); return; }
+    let who;
+    if(/^(Chorus|Final Chorus|Call)/.test(name)) who=all;
+    else if(name==="Pre-Chorus") who=mem.slice(0,Math.min(2,mem.length)).join(" & ");
+    else if(name==="Bridge") who=mem[mem.length-1];
+    else { who=mem[vi%mem.length]; vi++; }
+    out.push(`[${name}: ${who}]`);
+    if(name==="Call and Response"){
+      out.push(`（${mem[0]}）${spLine(theme,words)}`);
+      out.push(`（${all}）オー オー オー`);
+      out.push("");
+      return;
+    }
+    for(let i=0;i<lines;i++){
+      const isChorus=/^(Chorus|Final Chorus)/.test(name);
+      if(isChorus&&i===0){ out.push(hook); continue; }
+      if(isChorus&&lang==="mix"&&i===lines-1){ out.push(pick(W.en)); continue; }
+      out.push(spLine(theme,words));
+    }
+    out.push("");
+  });
+  return out.join("\n").trim();
+}
+function spBuild(regenLyricsOnly){
+  const g=$("#sp-genre").value, gi=SP_GENRE[g];
+  const mood=$("#sp-mood").value, lang=$("#sp-lang").value;
+  const bpm=$("#sp-bpm").value, key=KEYS[parseInt($("#sp-key").value,10)];
+  const scale=$("#sp-scale").value==="major"?"major":"minor";
+  const meter=$("#sp-meter").value, mem=SP.members.length?SP.members:["結衣"];
+  const theme=$("#sp-theme").value.trim();
+  const words=$("#sp-words").value.split(/[,、\s]+/).map(s=>s.trim()).filter(Boolean);
+
+  SP.lyrics=spBuildLyrics();
+  $("#sp-lyrics").textContent=SP.lyrics;
+  if(regenLyricsOnly) return;
+
+  const langEn={ja:"Japanese lyrics",mix:"Japanese lyrics with English hook",en:"English lyrics"}[lang];
+  const voxEn=mem.map(n=>SP_VOX[n].en).join("; ");
+  const ens={1:"solo vocal",2:"male-female duet, alternating lines",3:"three-part vocal trio",
+    4:"four-part vocal arrangement",6:"six-member group with layered unison chorus"}[mem.length]||"group vocal";
+
+  $("#sp-style").textContent=[
+    gi.en, mood?SP_MOOD[mood]:"", langEn, ens,
+    gi.inst, `${bpm} BPM`, `key of ${key} ${scale}`, `${meter} time`,
+    "clean modern production, wide stereo chorus, radio-ready mix"
+  ].filter(Boolean).join(", ");
+
+  $("#sp-dd").textContent=[
+    "=== DayDream＋ SONG BRIEF ===",
+    `Project : DayDream Plus (DayDream＋) original song`,
+    `Title   : ${$("#sp-title").value.trim()||"(未定 / タイトル案から選択)"}`,
+    `Theme   : ${theme||"(未設定)"}${words.length?" / keywords: "+words.join(", "):""}`,
+    `Genre   : ${g} — ${gi.en}`,
+    `Mood    : ${mood} — ${SP_MOOD[mood]}`,
+    `Tempo   : ${bpm} BPM / ${meter} / key of ${key} ${scale}`,
+    `Language: ${langEn}`,
+    "",
+    `Vocal formation : ${SP_SIZE_JP[SP.mode]}（${mem.length}名）`,
+    ...mem.map((n,i)=>`  ${i===0?"Lead ":"Sub  "}${n}（${MEMBERS[n].role}） : ${SP_VOX[n].jp} / ${SP_VOX[n].en}`),
+    "",
+    `Arrangement : ${gi.inst}`,
+    "Chorus      : layered unison by all selected members, wide stereo double-track",
+    "Structure   : "+SP_FORM[$("#sp-form").value].map(f=>f[0]).join(" → "),
+    "Production  : clean modern J-pop mix, vocals forward, no clipping",
+    "",
+    "※ 実在のメンバー本人の声は再現されません。声質の方向づけとして指定しています。"
+  ].join("\n");
+
+  const neg=$("#sp-neg").value.trim();
+  $("#sp-exclude").textContent=[neg,"lo-fi, muddy mix, off-key vocals, excessive autotune, distorted clipping"]
+    .filter(Boolean).join(", ");
+
+  SP.titles=spTitles(theme,words);
+  const h=$("#sp-titles"); h.innerHTML="";
+  SP.titles.forEach(t=>{
+    const b=document.createElement("button"); b.textContent=t;
+    b.onclick=()=>{ $("#sp-title").value=t; spBuild(); toast("曲名に入れました"); };
+    h.appendChild(b);
+  });
+}
+
+/* ---------- UI 配線 ---------- */
+(function spInit(){
+  const g=$("#sp-genre");
+  Object.keys(SP_GENRE).forEach(n=>{const o=document.createElement("option");o.textContent=n;g.appendChild(o);});
+  const k=$("#sp-key"); KEYS.forEach((n,i)=>{const o=document.createElement("option");o.value=i;o.textContent=n;k.appendChild(o);});
+  k.value=0;
+  $("#sp-bpm").oninput=e=>$("#sp-vbpm").textContent=e.target.value;
+
+  const mc=$("#sp-members");
+  Object.entries(MEMBERS).forEach(([name,m])=>{
+    const b=document.createElement("button"); b.className="chip m"; b.dataset.name=name; b.title=m.role;
+    b.innerHTML=`<span class="dot" style="background:${m.color}"></span>${name}`;
+    b.onclick=()=>{
+      const max=SP_SIZE[SP.mode], i=SP.members.indexOf(name);
+      if(i>=0){ if(SP.members.length>1) SP.members.splice(i,1); }
+      else { SP.members.push(name); while(SP.members.length>max) SP.members.shift(); }
+      spSync();
+    };
+    mc.appendChild(b);
+  });
+  $("#sp-mode").onchange=()=>{
+    SP.mode=$("#sp-mode").value;
+    const max=SP_SIZE[SP.mode];
+    if(SP.mode==="all") SP.members=Object.keys(MEMBERS);
+    while(SP.members.length>max) SP.members.pop();
+    const order=["結衣","悠真","葵","蓮","美琴","大地"];
+    for(const n of order){ if(SP.members.length>=max) break; if(!SP.members.includes(n)) SP.members.push(n); }
+    spSync();
+  };
+  $("#sp-gen").onclick=()=>{ spBuild(); toast("プロンプトを作りました"); };
+  $("#sp-re").onclick=()=>{ spBuild(true); toast("歌詞を作り直しました"); };
+  $("#sp-rand").onclick=()=>{
+    $("#sp-theme").value=pick(["夏の終わり","旅立ち","約束","再会","始まりの朝","放課後"]);
+    $("#sp-words").value=pick(["改札, 花火","坂道, 白い息","屋上, 星屑","潮風, 制服"]);
+    $("#sp-genre").selectedIndex=Math.floor(Math.random()*Object.keys(SP_GENRE).length);
+    $("#sp-bpm").value=Math.round(rnd(70,175)); $("#sp-vbpm").textContent=$("#sp-bpm").value;
+    $("#sp-key").value=Math.floor(Math.random()*12);
+    spBuild(); toast("おまかせで作りました");
+  };
+  $$("[data-copy]").forEach(b=>b.onclick=()=>{
+    const el=$(b.dataset.copy), txt=el.textContent;
+    if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>toast("コピーしました"),()=>toast("選択してコピーしてください"));
+    else toast("選択してコピーしてください");
+  });
+  spSync();
+})();
+function spSync(){
+  $$("#sp-members .chip").forEach(b=>b.classList.toggle("on",SP.members.includes(b.dataset.name)));
+  $("#sp-cnt").textContent=SP.members.length+" / "+SP_SIZE[SP.mode]+" 選択中";
+}
+
+/* ==========================================================
+   Phase 3 : AI アシスト（/api/ai 経由で Groq / Gemini / OpenAI）
+   APIキーはブラウザに置かず、サーバー側の環境変数から使います。
+   ========================================================== */
+const AI = { ready:false, providers:[], busy:false };
+
+async function aiPing(){
+  const set=(txt)=>{ const a=$("#ai-state"), b=$("#set-ai-state"); if(a)a.textContent=txt; if(b)b.textContent=txt; };
+  if(location.protocol==="file:"){
+    AI.ready=false; set("ローカルでは使えません（Vercelに上げると動きます）");
+    $("#ai-hint").textContent="index.html を直接開いた状態では AI 機能は呼べません。下書き生成はそのまま使えます。";
+    return;
+  }
+  try{
+    const r=await fetch("/api/ai",{cache:"no-store"});
+    const d=await r.json();
+    AI.providers=d.providers||[]; AI.ready=AI.providers.length>0;
+    set(AI.ready?("接続あり： "+AI.providers.join(" / ")):"APIキー未設定（下書き生成のみ）");
+    $("#ai-hint").textContent=AI.ready
+      ? "文章の生成はサーバー経由です。押してから数秒かかります。"
+      : "Vercel の Environment Variables に GROQ_API_KEY などを入れると使えるようになります。";
+  }catch(e){
+    AI.ready=false; set("APIに繋がりません（下書き生成のみ）");
+    $("#ai-hint").textContent="/api/ai が見つかりません。api フォルダごとデプロイされているか確認してください。";
+  }
+}
+function aiPayload(){
+  const mem=SP.members.length?SP.members:["結衣"];
+  return {
+    title:$("#sp-title").value.trim(), theme:$("#sp-theme").value.trim(),
+    words:$("#sp-words").value.split(/[,、\s]+/).map(s=>s.trim()).filter(Boolean),
+    genre:$("#sp-genre").value, mood:$("#sp-mood").value, lang:$("#sp-lang").value,
+    bpm:$("#sp-bpm").value, key:KEYS[parseInt($("#sp-key").value,10)]+" "+$("#sp-scale").value,
+    meter:$("#sp-meter").value, formation:SP_SIZE_JP[SP.mode], members:mem,
+    structure:SP_FORM[$("#sp-form").value].map(f=>f[0]),
+    lyrics:$("#sp-lyrics").textContent, style:$("#sp-style").textContent,
+    negative:$("#sp-neg").value.trim()
+  };
+}
+async function aiCall(task,extra){
+  if(AI.busy) return null;
+  if(!AI.ready){ toast("AIが未接続です。設定画面の説明を確認してください"); return null; }
+  AI.busy=true;
+  const card=$("#ai-lyrics").closest(".card"); card.classList.add("aibusy");
+  const hint=$("#ai-hint"), t0=Date.now();
+  const tick=setInterval(()=>{ hint.textContent="AIが考えています… "+((Date.now()-t0)/1000).toFixed(1)+" 秒"; },100);
+  try{
+    const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({task,provider:$("#ai-provider").value||undefined,
+        payload:Object.assign(aiPayload(),extra||{})})});
+    const d=await r.json();
+    if(!d.ok) throw new Error(d.error||"失敗しました");
+    hint.textContent=`${d.provider} / ${d.model} で生成（${((Date.now()-t0)/1000).toFixed(1)}秒）`;
+    return d;
+  }catch(e){
+    hint.textContent="失敗しました： "+String(e.message||e).slice(0,180);
+    toast("AIの呼び出しに失敗しました");
+    return null;
+  }finally{
+    clearInterval(tick); AI.busy=false; card.classList.remove("aibusy");
+  }
+}
+function aiBind(){
+  const on=(id,fn)=>{ const b=$(id); if(b) b.onclick=fn; };
+  on("#ai-lyrics",async()=>{
+    const d=await aiCall("lyrics"); if(!d)return;
+    SP.lyrics=d.text; $("#sp-lyrics").textContent=d.text; toast("AIが歌詞を書きました");
+  });
+  on("#ai-polish",async()=>{
+    if(!$("#sp-lyrics").textContent.trim()||$("#sp-lyrics").textContent==="—"){ toast("先に歌詞を作ってください"); return; }
+    const d=await aiCall("polish"); if(!d)return;
+    SP.lyrics=d.text; $("#sp-lyrics").textContent=d.text; toast("歌詞を推敲しました");
+  });
+  on("#ai-yomi",async()=>{
+    if(!$("#sp-lyrics").textContent.trim()||$("#sp-lyrics").textContent==="—"){ toast("先に歌詞を作ってください"); return; }
+    const d=await aiCall("yomi"); if(!d)return;
+    $("#sp-lyrics").textContent=d.text; toast("よみがなを付けました");
+  });
+  on("#ai-titles",async()=>{
+    const d=await aiCall("titles"); if(!d)return;
+    const list=(d.data&&d.data.titles)||d.text.split("\n").map(s=>s.replace(/^[-・\d.\s"]+|"$/g,"").trim()).filter(Boolean);
+    const h=$("#sp-titles"); h.innerHTML="";
+    list.slice(0,8).forEach(t=>{
+      const b=document.createElement("button"); b.textContent=t;
+      b.onclick=()=>{ $("#sp-title").value=t; toast("曲名に入れました"); };
+      h.appendChild(b);
+    });
+    toast("タイトル案を作りました");
+  });
+  on("#ai-style",async()=>{
+    const d=await aiCall("style"); if(!d)return;
+    $("#sp-style").textContent=d.text.replace(/^["'\s]+|["'\s]+$/g,""); toast("スタイル文を整えました");
+  });
+  on("#ai-review",async()=>{
+    const d=await aiCall("review"); if(!d)return;
+    const h=$("#ai-reviews"); h.innerHTML="";
+    const list=(d.data&&d.data.reviews)||[];
+    if(!list.length){ const p=document.createElement("div"); p.className="rv"; p.innerHTML="<p>"+d.text+"</p>"; h.appendChild(p); }
+    else list.forEach(r=>{
+      const el=document.createElement("div"); el.className="rv";
+      el.innerHTML=`<b>${r.name||""}</b><small>${r.role||""}</small><p>${r.comment||""}</p>`;
+      h.appendChild(el);
+    });
+    $("#ai-rvmeta").textContent=d.provider+" / "+d.model;
+    toast("レビューが届きました");
+  });
+  const chk=$("#set-ai-check"); if(chk) chk.onclick=()=>{ aiPing(); toast("接続を確認しました"); };
+}
+aiBind(); aiPing();
