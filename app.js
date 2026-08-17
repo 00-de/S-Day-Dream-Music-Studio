@@ -97,13 +97,17 @@ function go(id){
   if(id==="fav")renderList("#favList",S.library.filter(x=>x.fav));
   if(id==="mv")renderList("#mvList",S.library);
   if(id==="playlist")renderList("#plList",S.library);
+  if(id==="studio"&&!S._drawerSeen){ S._drawerSeen=true; setTimeout(openDrawer,260); }
   if(id==="studio"){ setTimeout(()=>{ if(S.buffer){drawWave();drawScore();} drawViz(pos()); drawMvFrame(pos()); },30); }
 }
 
 /* ---------- ドロワー ---------- */
-$("#btn-drawer").onclick=()=>{$("#drawer").classList.add("on");$("#scrim").classList.add("on");};
+const openDrawer=()=>{$("#drawer").classList.add("on");$("#scrim").classList.add("on");};
 const closeDrawer=()=>{$("#drawer").classList.remove("on");$("#scrim").classList.remove("on");};
+$("#btn-drawer").onclick=openDrawer; $("#btn-drawer2").onclick=()=>{go("studio");openDrawer();};
 $("#drawerClose").onclick=closeDrawer; $("#scrim").onclick=closeDrawer;
+$("#btn-drawerOk").onclick=closeDrawer;
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeDrawer(); });
 
 /* ---------- フォーム構築 ---------- */
 (function buildForm(){
@@ -167,7 +171,16 @@ function syncChips(){
   $$("#f-band .chip").forEach(b=>b.classList.toggle("on",S.band.includes(b.dataset.name)));
   $$("#f-orch .chip").forEach(b=>b.classList.toggle("on",S.orch.includes(b.dataset.name)));
   $$("#f-mand .chip").forEach(b=>b.classList.toggle("on",S.mand.includes(b.dataset.name)));
-  updateGauges(); renderTrackRail();
+  updateGauges(); renderTrackRail(); renderPickSummary();
+}
+function renderPickSummary(){
+  const h=$("#pickSummary"); if(!h)return;
+  const line=(k,v)=>`<div class="pk"><b>${k}</b><span>${v||"—"}</span></div>`;
+  h.innerHTML=line("PRESET",S.preset)+line("VOCAL",S.members.join("・"))
+    +line("BAND",S.band.join("・"))+line("ORCH",S.orch.join("・"))+line("MAND",S.mand.join("・"));
+  const set=(id,n,max)=>{const e=$(id); if(e) e.textContent=n+(max?" / "+max:"")+" 選択中";};
+  set("#c-vocal",S.members.length,{solo:1,duet:2,trio:3,all:6}[$("#f-vmode").value]);
+  set("#c-band",S.band.length); set("#c-orch",S.orch.length); set("#c-mand",S.mand.length);
 }
 function updateGauges(){
   const k=(parseInt($("#f-key").value,10)+parseInt($("#f-trans").value,10)+120)%12;
@@ -1048,4 +1061,4 @@ function renderList(sel,items){
 $("#lyricEdit").value="夕暮れの坂道 君の影が伸びる\nあと少しだけ このままでいたいよ\n名前を呼ぶ声が 風にほどけていく\n忘れないよ この夏のこと";
 $("#f-title").value="七月の合図";
 $("#f-theme").value="夏の終わり";
-updateGauges(); renderTrackRail(); drawViz(0); drawMvFrame(0); status("STANDBY",false);
+updateGauges(); renderTrackRail(); renderPickSummary(); drawViz(0); drawMvFrame(0); status("STANDBY",false);
