@@ -21,7 +21,17 @@ const MEMBERS = {
 const BAND = {
   "エレキギター":{t:"egtr",c:"#FF4FA3",oct:0,g:"🎸"},"アコースティックギター":{t:"agtr",c:"#FFA65D",oct:0,g:"🪕"},
   "ベース":{t:"bass",c:"#9B7BFF",oct:-2,g:"🎻"},"ドラム":{t:"drums",c:"#7E90AC",oct:0,g:"🥁"},
-  "キーボード":{t:"pad",c:"#7FD4FF",oct:0,g:"🎹"},"ピアノ":{t:"piano",c:"#E6EEF8",oct:0,g:"🎼"}
+  "キーボード":{t:"pad",c:"#7FD4FF",oct:0,g:"🎹"},"ピアノ":{t:"piano",c:"#E6EEF8",oct:0,g:"🎼"},
+  "エレクトリックピアノ":{t:"piano",c:"#9BE0FF",oct:0,g:"🎹"},"オルガン":{t:"pad",c:"#FFB86B",oct:0,g:"🎹"},
+  "シンセリード":{t:"lead",c:"#FF7FD0",oct:1,g:"🎛"},"ウクレレ":{t:"agtr",c:"#FFD87A",oct:1,g:"🪕"},
+  "パーカッション":{t:"perc",c:"#8FA3C0",oct:0,g:"🪘"}
+};
+const WAGA = {
+  "尺八":{t:"wafue",c:"#C7B393",oct:0,g:"🎍"},"篠笛":{t:"wafue",c:"#E3D4B8",oct:1,g:"🎍"},
+  "箏（琴）":{t:"koto",c:"#F0C987",oct:0,g:"🎴"},"三味線":{t:"shami",c:"#E08B5A",oct:0,g:"🪕"},
+  "津軽三味線":{t:"shami",c:"#D0603A",oct:1,g:"🪕"},"琵琶":{t:"biwa",c:"#B07A4A",oct:-1,g:"🪕"},
+  "和太鼓":{t:"taiko",c:"#C2453C",oct:0,g:"🥁"},"鼓（つづみ）":{t:"tsuzumi",c:"#D98F86",oct:0,g:"🪘"},
+  "りん・鈴":{t:"rin",c:"#F5E6B8",oct:1,g:"🔔"}
 };
 const ORCH = {
   "バイオリン":{t:"bow",c:"#35E1F5",oct:1,g:"🎻"},"ビオラ":{t:"bow",c:"#35E1F5",oct:0,g:"🎻"},
@@ -37,17 +47,19 @@ const MAND = {
   "マンドチェロ":{t:"mand",c:"#7460DC",oct:-1,g:"🪕"},"マンドロンチェロ":{t:"mand",c:"#6151C4",oct:-2,g:"🪕"}
 };
 const PRESETS = {
-  "アイドル":{scale:"major",bpm:150,prog:[1,5,6,4],band:["エレキギター","ベース","ドラム","キーボード"],orch:[],mand:[],mv:["#FF4FA3","#35E1F5","#FFC24B"]},
-  "ロック":{scale:"minor",bpm:168,prog:[6,4,1,5],band:["エレキギター","ベース","ドラム"],orch:[],mand:[],mv:["#FF4FA3","#2B1020","#FFC24B"]},
-  "バラード":{scale:"major",bpm:68,prog:[1,5,6,3,4,1,4,5],band:["ピアノ","ベース","ドラム"],orch:["バイオリン","チェロ"],mand:[],mv:["#35E1F5","#141F3C","#E6EEF8"]},
-  "夏ソング":{scale:"major",bpm:140,prog:[1,4,5,4],band:["アコースティックギター","ベース","ドラム","キーボード"],orch:[],mand:[],mv:["#35E1F5","#FFC24B","#7FD4FF"]},
-  "冬ソング":{scale:"minor",bpm:84,prog:[6,4,1,5],band:["ピアノ","ベース"],orch:["バイオリン","フルート"],mand:[],mv:["#BFEFFF","#1B2647","#E6EEF8"]},
-  "卒業ソング":{scale:"major",bpm:78,prog:[4,5,1,6],band:["ピアノ","アコースティックギター","ベース","ドラム"],orch:["バイオリン","チェロ"],mand:[],mv:["#FFA65D","#35E1F5","#E6EEF8"]},
-  "ライブ":{scale:"major",bpm:162,prog:[1,5,6,4],band:["エレキギター","ベース","ドラム","キーボード"],orch:["トランペット"],mand:[],mv:["#FF4FA3","#FFC24B","#35E1F5"]},
-  "映画音楽":{scale:"minor",bpm:96,prog:[1,6,4,5],band:[],orch:["バイオリン","ビオラ","チェロ","コントラバス","ホルン","ティンパニ","ハープ"],mand:[],mv:["#1B2647","#FFC24B","#060C18"]},
-  "オーケストラ":{scale:"major",bpm:112,prog:[1,4,5,1],band:[],orch:["バイオリン","ビオラ","チェロ","コントラバス","フルート","オーボエ","クラリネット","ホルン","トランペット","ティンパニ"],mand:[],mv:["#E6EEF8","#FFC24B","#1B2647"]},
-  "マンドリンアンサンブル":{scale:"major",bpm:120,prog:[1,5,6,4],band:["ベース"],orch:[],mand:["マンドリン","マンドラ","マンドチェロ","マンドロンチェロ"],mv:["#9B7BFF","#E6EEF8","#35E1F5"]},
-  "演歌":{scale:"pentatonic",bpm:72,prog:[1,4,5,1],band:["ベース"],orch:["バイオリン","フルート"],mand:["マンドリン"],mv:["#FFC24B","#2B1020","#E6EEF8"]}
+  "アイドル":{scale:"major",bpm:150,prog:[1,5,6,4],band:["エレキギター","ベース","ドラム","キーボード"],orch:[],waga:[],mand:[],mv:["#FF4FA3","#35E1F5","#FFC24B"]},
+  "ロック":{scale:"minor",bpm:168,prog:[6,4,1,5],band:["エレキギター","ベース","ドラム"],orch:[],waga:[],mand:[],mv:["#FF4FA3","#2B1020","#FFC24B"]},
+  "バラード":{scale:"major",bpm:68,prog:[1,5,6,3,4,1,4,5],band:["ピアノ","ベース","ドラム"],orch:["バイオリン","チェロ"],waga:[],mand:[],mv:["#35E1F5","#141F3C","#E6EEF8"]},
+  "夏ソング":{scale:"major",bpm:140,prog:[1,4,5,4],band:["アコースティックギター","ベース","ドラム","キーボード"],orch:[],waga:[],mand:[],mv:["#35E1F5","#FFC24B","#7FD4FF"]},
+  "冬ソング":{scale:"minor",bpm:84,prog:[6,4,1,5],band:["ピアノ","ベース"],orch:["バイオリン","フルート"],waga:[],mand:[],mv:["#BFEFFF","#1B2647","#E6EEF8"]},
+  "卒業ソング":{scale:"major",bpm:78,prog:[4,5,1,6],band:["ピアノ","アコースティックギター","ベース","ドラム"],orch:["バイオリン","チェロ"],waga:[],mand:[],mv:["#FFA65D","#35E1F5","#E6EEF8"]},
+  "ライブ":{scale:"major",bpm:162,prog:[1,5,6,4],band:["エレキギター","ベース","ドラム","キーボード"],orch:["トランペット"],waga:[],mand:[],mv:["#FF4FA3","#FFC24B","#35E1F5"]},
+  "映画音楽":{scale:"minor",bpm:96,prog:[1,6,4,5],band:[],orch:["バイオリン","ビオラ","チェロ","コントラバス","ホルン","ティンパニ","ハープ"],waga:[],mand:[],mv:["#1B2647","#FFC24B","#060C18"]},
+  "オーケストラ":{scale:"major",bpm:112,prog:[1,4,5,1],band:[],orch:["バイオリン","ビオラ","チェロ","コントラバス","フルート","オーボエ","クラリネット","ホルン","トランペット","ティンパニ"],waga:[],mand:[],mv:["#E6EEF8","#FFC24B","#1B2647"]},
+  "マンドリンアンサンブル":{scale:"major",bpm:120,prog:[1,5,6,4],band:["ベース"],orch:[],waga:[],mand:["マンドリン","マンドラ","マンドチェロ","マンドロンチェロ"],mv:["#9B7BFF","#E6EEF8","#35E1F5"]},
+  "和ロック":{scale:"pentatonic",bpm:150,prog:[6,4,1,5],band:["エレキギター","ベース","ドラム"],orch:[],waga:["尺八","津軽三味線","和太鼓"],mand:[],mv:["#C2453C","#0A0F1E","#F0C987"]},
+  "純邦楽":{scale:"pentatonic",bpm:64,prog:[1,4,5,1],band:[],orch:[],waga:["尺八","箏（琴）","三味線","鼓（つづみ）","りん・鈴"],mand:[],mv:["#F0C987","#2B1810","#C7B393"]},
+  "演歌":{scale:"pentatonic",bpm:72,prog:[1,4,5,1],band:["ベース"],orch:["バイオリン","フルート"],waga:["尺八","三味線"],mand:["マンドリン"],mv:["#FFC24B","#2B1020","#E6EEF8"]}
 };
 const FORM = [
   {n:"INTRO",w:1.0,e:.45,v:false},{n:"VERSE 1",w:2.0,e:.55,v:true},{n:"PRE-CHORUS",w:1.5,e:.7,v:true},
@@ -57,7 +69,7 @@ const FORM = [
 
 /* ---------- 状態 ---------- */
 const S = {
-  preset:"アイドル", members:["結衣"], band:[], orch:[], mand:[],
+  preset:"アイドル", members:["結衣"], band:[], orch:[], waga:[], mand:[],
   song:null, buffer:null, ctx:null, src:null, playing:false, startAt:0, offset:0,
   library:[], mixer:{}, rafT:0, _peaks:null, _peakKey:null, vizPane:"wave"
 };
@@ -141,7 +153,8 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeDrawer(); });
       h.appendChild(b);
     });
   };
-  mk("#f-band",BAND,"",  "band"); mk("#f-orch",ORCH,"a","orch"); mk("#f-mand",MAND,"v","mand");
+  mk("#f-band",BAND,"",  "band"); mk("#f-waga",WAGA,"a","waga");
+  mk("#f-orch",ORCH,"a","orch"); mk("#f-mand",MAND,"v","mand");
   applyPreset("アイドル");
 })();
 
@@ -160,7 +173,7 @@ $("#f-vmode").onchange=()=>{
 };
 function applyPreset(name){
   S.preset=name; const p=PRESETS[name];
-  S.band=[...p.band]; S.orch=[...p.orch]; S.mand=[...p.mand];
+  S.band=[...p.band]; S.waga=[...(p.waga||[])]; S.orch=[...p.orch]; S.mand=[...p.mand];
   $("#f-bpm").value=p.bpm; $("#v-bpm").textContent=p.bpm; $("#f-scale").value=p.scale;
   if(name==="演歌"&&!S.members.includes("美琴")) S.members=["美琴"];
   syncChips();
@@ -169,6 +182,7 @@ function syncChips(){
   $$("#f-preset .chip").forEach(b=>b.classList.toggle("on",b.textContent===S.preset));
   $$("#f-members .chip").forEach(b=>b.classList.toggle("on",S.members.includes(b.dataset.name)));
   $$("#f-band .chip").forEach(b=>b.classList.toggle("on",S.band.includes(b.dataset.name)));
+  $$("#f-waga .chip").forEach(b=>b.classList.toggle("on",S.waga.includes(b.dataset.name)));
   $$("#f-orch .chip").forEach(b=>b.classList.toggle("on",S.orch.includes(b.dataset.name)));
   $$("#f-mand .chip").forEach(b=>b.classList.toggle("on",S.mand.includes(b.dataset.name)));
   updateGauges(); renderTrackRail(); renderPickSummary();
@@ -177,10 +191,12 @@ function renderPickSummary(){
   const h=$("#pickSummary"); if(!h)return;
   const line=(k,v)=>`<div class="pk"><b>${k}</b><span>${v||"—"}</span></div>`;
   h.innerHTML=line("PRESET",S.preset)+line("VOCAL",S.members.join("・"))
-    +line("BAND",S.band.join("・"))+line("ORCH",S.orch.join("・"))+line("MAND",S.mand.join("・"));
+    +line("BAND",S.band.join("・"))+line("和楽器",S.waga.join("・"))
+    +line("ORCH",S.orch.join("・"))+line("MAND",S.mand.join("・"));
   const set=(id,n,max)=>{const e=$(id); if(e) e.textContent=n+(max?" / "+max:"")+" 選択中";};
   set("#c-vocal",S.members.length,{solo:1,duet:2,trio:3,all:6}[$("#f-vmode").value]);
-  set("#c-band",S.band.length); set("#c-orch",S.orch.length); set("#c-mand",S.mand.length);
+  set("#c-band",S.band.length); set("#c-waga",S.waga.length);
+  set("#c-orch",S.orch.length); set("#c-mand",S.mand.length);
 }
 function updateGauges(){
   const k=(parseInt($("#f-key").value,10)+parseInt($("#f-trans").value,10)+120)%12;
@@ -198,7 +214,8 @@ function renderTrackRail(){
     h.appendChild(b);
   };
   S.members.forEach(n=>add(MEMBERS[n].g,n,MEMBERS[n].color,true));
-  S.band.forEach(n=>add(BAND[n].g,n.length>6?n.slice(0,5)+"…":n,BAND[n].c,true));
+  S.band.forEach(n=>add(BAND[n].g,n.length>5?n.slice(0,4)+"…":n,BAND[n].c,true));
+  S.waga.forEach(n=>add(WAGA[n].g,n.length>5?n.slice(0,4)+"…":n,WAGA[n].c,true));
   S.orch.slice(0,8).forEach(n=>add(ORCH[n].g,n.length>6?n.slice(0,5)+"…":n,ORCH[n].c,true));
   S.mand.forEach(n=>add(MAND[n].g,n.length>6?n.slice(0,5)+"…":n,MAND[n].c,true));
 }
@@ -296,7 +313,9 @@ function buildTracks(plan,lyricLines){
   const T=[], bpb=plan.bpb, mid=Math.floor(bpb/2);
   const fold=(m,lo,hi)=>{let v=Math.round(m);while(v<lo)v+=12;while(v>hi)v-=12;return clamp(v,lo,hi);};
   const RANGE={bass:[28,55],timp:[36,55],drums:[35,50],bow:[36,96],brass:[34,88],reed:[40,88],
-    flute:[60,100],harp:[36,96],mand:[45,96],egtr:[40,88],agtr:[40,88],piano:[36,96],pad:[36,90]};
+    flute:[60,100],harp:[36,96],mand:[45,96],egtr:[40,88],agtr:[40,88],piano:[36,96],pad:[36,90],
+    lead:[55,96],perc:[35,50],wafue:[60,96],koto:[48,96],shami:[45,88],biwa:[40,80],
+    taiko:[30,60],tsuzumi:[30,60],rin:[72,100]};
   const push=(name,type,color,notes,vol,pan,rev)=>{
     const r=type.startsWith("voice:")?[48,84]:(RANGE[type]||[36,90]);
     const fixed=type==="drums"?notes:notes.map(n=>({...n,midi:fold(n.midi,r[0],r[1])}));
@@ -360,13 +379,21 @@ function buildTracks(plan,lyricLines){
     const inf=dict[name], oct=inf.oct*12;
     let notes;
     if(inf.t==="drums") notes=drumN;
+    else if(inf.t==="perc") notes=drumN.filter(n=>n.midi===42);
+    else if(inf.t==="taiko") notes=drumN.filter(n=>n.midi===36).map(n=>({...n,vel:.9}));
+    else if(inf.t==="tsuzumi") notes=drumN.filter(n=>n.midi===38).map(n=>({...n,vel:.6}));
     else if(inf.t==="bass") notes=bassN;
-    else if(["egtr","agtr","pad","piano","harp","mand"].includes(inf.t)) notes=chords.map(n=>({...n,midi:n.midi+oct}));
+    else if(["egtr","agtr","pad","piano","harp","mand","koto","shami","biwa"].includes(inf.t))
+      notes=chords.map(n=>({...n,midi:n.midi+oct}));
+    else if(inf.t==="rin") notes=chords.filter((_,i)=>i%12===0).map(n=>({...n,midi:n.midi+oct,dur:2}));
     else if(inf.t==="timp") notes=bassN.filter((_,i)=>i%4===0).map(n=>({...n,midi:n.midi+oct,dur:1}));
     else notes=mel.map(n=>({...n,midi:n.midi+oct,vel:n.vel*.5}));
-    push(name,inf.t,inf.c,notes,inf.t==="drums"?.8:.5,rnd(-.4,.4),inf.t==="bow"||inf.t==="brass"?.42:.28);
+    const drumish=["drums","taiko","tsuzumi","perc"].includes(inf.t);
+    push(name,inf.t,inf.c,notes,drumish?.8:.5,rnd(-.4,.4),
+      ["bow","brass","wafue","rin","koto"].includes(inf.t)?.42:.28);
   };
   S.band.forEach(n=>inst(n,BAND));
+  S.waga.forEach(n=>inst(n,WAGA));
   S.orch.forEach(n=>inst(n,ORCH));
   S.mand.forEach(n=>inst(n,MAND));
   if(!S.band.includes("ベース")&&!S.orch.includes("コントラバス"))
@@ -520,6 +547,77 @@ function playNote(ctx,dest,type,midi,t,dur,vel,extra){
       nb.start(t); nb.stop(t+dur+.2);
       env(g,t,.07,.08,.9,.22,dur,v*.3); o.start(t); o.stop(t+dur+.3); return;
     }
+    case "lead":{
+      const o=ctx.createOscillator(); o.type="square"; o.frequency.value=f;
+      const o2=ctx.createOscillator(); o2.type="sawtooth"; o2.frequency.value=f; o2.detune.value=7;
+      const g2=ctx.createGain(); g2.gain.value=.4; o2.connect(g2);
+      const lp=ctx.createBiquadFilter(); lp.type="lowpass";
+      lp.frequency.setValueAtTime(900,t); lp.frequency.exponentialRampToValueAtTime(4200,t+.06); lp.Q=3;
+      o.connect(lp); g2.connect(lp); lp.connect(g);
+      env(g,t,.01,.09,.7,.15,dur,v*.26);
+      o.start(t); o.stop(t+dur+.2); o2.start(t); o2.stop(t+dur+.2); return;
+    }
+    case "perc":{
+      const nb=ctx.createBufferSource(); nb.buffer=NB;
+      const bp=ctx.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=2600; bp.Q=2.4;
+      nb.connect(bp); bp.connect(g); env(g,t,.002,.05,.02,.04,.05,v*.4);
+      nb.start(t); nb.stop(t+.2); return;
+    }
+    /* ---- 和楽器 ---- */
+    case "koto": case "shami": case "biwa":{
+      const gg=ctx.createGain(); gg.connect(g);
+      const o=ctx.createOscillator(); o.type=type==="koto"?"triangle":"sawtooth"; o.frequency.value=f;
+      if(type==="koto"){ o.frequency.setValueAtTime(f*1.02,t); o.frequency.exponentialRampToValueAtTime(f,t+.07); }
+      const lp=ctx.createBiquadFilter(); lp.type="lowpass";
+      lp.frequency.setValueAtTime(type==="biwa"?5200:3800,t);
+      lp.frequency.exponentialRampToValueAtTime(600,t+Math.max(.12,dur));
+      o.connect(lp); lp.connect(gg);
+      env(gg,t,.003,Math.max(.1,dur*.75),.04,.15,dur*.85,v*.34);
+      o.start(t); o.stop(t+dur+.25);
+      if(type!=="koto"&&!SIMPLE){                       // 三味線・琵琶の「さわり」
+        const nb=ctx.createBufferSource(); nb.buffer=NB;
+        const bp=ctx.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=Math.min(9000,f*3.2); bp.Q=2;
+        const ng=ctx.createGain();
+        ng.gain.setValueAtTime(v*.13,t); ng.gain.exponentialRampToValueAtTime(.0001,t+.2);
+        nb.connect(bp); bp.connect(ng); ng.connect(g); nb.start(t); nb.stop(t+.3);
+      }
+      env(g,t,.001,.01,1,.02,dur,1); return;
+    }
+    case "wafue":{                                      // 尺八・篠笛
+      const o=ctx.createOscillator(); o.type="sine";
+      o.frequency.setValueAtTime(f*.985,t); o.frequency.linearRampToValueAtTime(f,t+.1);
+      if(!SIMPLE){const lfo=ctx.createOscillator(),la=ctx.createGain();
+        lfo.frequency.value=4.4; la.gain.value=f*.013;
+        lfo.connect(la); la.connect(o.frequency); lfo.start(t); lfo.stop(t+dur+.3);}
+      o.connect(g);
+      if(!SIMPLE){                                      // 息の音
+        const nb=ctx.createBufferSource(); nb.buffer=NB; nb.loop=true;
+        const bp=ctx.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=Math.min(9000,f*2.2); bp.Q=.7;
+        const ng=ctx.createGain(); ng.gain.value=v*.1;
+        nb.connect(bp); bp.connect(ng); ng.connect(g); nb.start(t); nb.stop(t+dur+.2);
+      }
+      env(g,t,.1,.1,.85,.3,dur,v*.3); o.start(t); o.stop(t+dur+.3); return;
+    }
+    case "taiko": case "tsuzumi":{
+      const low=type==="taiko";
+      const o=ctx.createOscillator(); o.type="sine";
+      o.frequency.setValueAtTime(low?125:340,t);
+      o.frequency.exponentialRampToValueAtTime(low?52:150,t+(low?.18:.08));
+      const nb=ctx.createBufferSource(); nb.buffer=NB;
+      const bp=ctx.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=low?210:900; bp.Q=1.1;
+      nb.connect(bp); bp.connect(g); o.connect(g);
+      env(g,t,.004,low?.22:.09,.03,low?.28:.1,low?.2:.08,v*.75);
+      o.start(t); o.stop(t+.7); nb.start(t); nb.stop(t+.45); return;
+    }
+    case "rin":{                                        // りん・鈴
+      const gg=ctx.createGain(); gg.connect(g);
+      [1,2.76,5.4].forEach((h,i)=>{
+        const o=ctx.createOscillator(); o.type="sine"; o.frequency.value=Math.min(12000,f*h);
+        const og2=ctx.createGain(); og2.gain.value=[.5,.25,.12][i];
+        o.connect(og2); og2.connect(gg); o.start(t); o.stop(t+2.4);
+      });
+      env(gg,t,.002,1.7,.02,.6,1.7,v*.3); env(g,t,.001,.01,1,.02,dur,1); return;
+    }
     case "timp":{
       const o=ctx.createOscillator(); o.type="sine";
       o.frequency.setValueAtTime(f*1.4,t); o.frequency.exponentialRampToValueAtTime(f,t+.1);
@@ -611,7 +709,7 @@ function readCfg(){
     bpm:parseInt($("#f-bpm").value,10), key:parseInt($("#f-key").value,10),
     trans:parseInt($("#f-trans").value,10), length:parseInt($("#f-len").value,10),
     meter:$("#f-meter").value, vmode:$("#f-vmode").value, members:[...S.members],
-    band:[...S.band], orch:[...S.orch], mand:[...S.mand], lyrics:$("#lyricEdit").value
+    band:[...S.band], waga:[...S.waga], orch:[...S.orch], mand:[...S.mand], lyrics:$("#lyricEdit").value
   };
 }
 $("#btn-gen").onclick=async()=>{
@@ -673,7 +771,7 @@ $("#btn-gen").onclick=async()=>{
     console.error(e); status("ERROR",false);
     showError(e,{preset:cfg.preset,len:cfg.length,meter:cfg.meter,bpm:cfg.bpm,
       tracks:(S.song&&S.song.tracks?S.song.tracks.length:0),
-      band:cfg.band.length,orch:cfg.orch.length,mand:cfg.mand.length,
+      band:cfg.band.length,waga:(cfg.waga||[]).length,orch:cfg.orch.length,mand:cfg.mand.length,
       noteErrors:S._noteErrors||0});
   }finally{
     clearInterval(S._tick);
@@ -1107,6 +1205,20 @@ updateGauges(); renderTrackRail(); renderPickSummary(); $("#f-quality").onchange
 /* ==========================================================
    SUNO プロンプト生成
    ========================================================== */
+const INST_EN = {
+  "エレキギター":"electric guitar","アコースティックギター":"acoustic guitar","ベース":"electric bass",
+  "ドラム":"drum kit","キーボード":"synth keys","ピアノ":"grand piano",
+  "エレクトリックピアノ":"electric piano","オルガン":"organ","シンセリード":"synth lead",
+  "ウクレレ":"ukulele","パーカッション":"percussion",
+  "尺八":"shakuhachi","篠笛":"shinobue bamboo flute","箏（琴）":"koto","三味線":"shamisen",
+  "津軽三味線":"tsugaru shamisen","琵琶":"biwa lute","和太鼓":"taiko drums",
+  "鼓（つづみ）":"tsuzumi hand drum","りん・鈴":"rin bell, suzu bells",
+  "バイオリン":"violin","ビオラ":"viola","チェロ":"cello","コントラバス":"double bass",
+  "フルート":"flute","オーボエ":"oboe","クラリネット":"clarinet","ファゴット":"bassoon",
+  "ホルン":"french horn","トランペット":"trumpet","トロンボーン":"trombone","チューバ":"tuba",
+  "ハープ":"harp","ティンパニ":"timpani",
+  "マンドリン":"mandolin","マンドラ":"mandola","マンドチェロ":"mandocello","マンドロンチェロ":"mandoloncello"
+};
 const SP_VOX = {
   "悠真":{en:"warm mid-range male lead vocal, calm and steady, band leader on keys", jp:"落ち着いた中音域の男性ボーカル、キーボード担当"},
   "結衣":{en:"bright clear female lead vocal, agile and emotive, main vocalist", jp:"澄んだ高音の女性メインボーカル"},
@@ -1127,6 +1239,8 @@ const SP_GENRE = {
   "演歌":{en:"enka, traditional Japanese ballad", inst:"shakuhachi-like flute, strings, mandolin tremolo, upright bass"},
   "シティポップ":{en:"Japanese city pop, 80s groove", inst:"electric piano, slap bass, clean guitar, gated drums"},
   "映画音楽":{en:"cinematic score with vocals, epic build", inst:"strings, horns, choir, timpani, piano"},
+  "和ロック":{en:"Japanese wa-rock, traditional instruments over rock band", inst:"shakuhachi, tsugaru shamisen, taiko drums, distorted electric guitar, bass"},
+  "純邦楽":{en:"traditional Japanese music, sparse and meditative", inst:"shakuhachi, koto, shamisen, tsuzumi hand drum, rin bell"},
   "ライブアンセム":{en:"live anthem J-pop, stadium energy, crowd chants", inst:"electric guitar, bass, drums, brass stabs, synth"}
 };
 const SP_MOOD = {"疾走":"driving, energetic, forward-moving","やさしい":"gentle, warm, tender",
@@ -1134,7 +1248,7 @@ const SP_MOOD = {"疾走":"driving, energetic, forward-moving","やさしい":"g
 const SP_SIZE = {solo:1,duet:2,trio:3,fourth:4,all:6};
 const SP_SIZE_JP = {solo:"ソロ",duet:"デュエット",trio:"トリオ",fourth:"フォース",all:"全員"};
 
-const SP = { members:["結衣","悠真"], mode:"duet", lyrics:"", titles:[] };
+const SP = { members:["結衣","悠真"], mode:"duet", lyrics:"", titles:[], inst:{band:[],waga:[],orch:[],mand:[]} };
 
 /* ---------- 語彙バンク（歌詞・タイトルの下書き生成用） ---------- */
 const W = {
@@ -1254,9 +1368,11 @@ function spBuild(regenLyricsOnly){
   const ens={1:"solo vocal",2:"male-female duet, alternating lines",3:"three-part vocal trio",
     4:"four-part vocal arrangement",6:"six-member group with layered unison chorus"}[mem.length]||"group vocal";
 
+  const picked=[].concat(SP.inst.band,SP.inst.waga,SP.inst.orch,SP.inst.mand);
+  const instEn=picked.length?picked.map(n=>INST_EN[n]||n).join(", "):gi.inst;
   $("#sp-style").textContent=[
     gi.en, mood?SP_MOOD[mood]:"", langEn, ens,
-    gi.inst, `${bpm} BPM`, `key of ${key} ${scale}`, `${meter} time`,
+    instEn, `${bpm} BPM`, `key of ${key} ${scale}`, `${meter} time`,
     "clean modern production, wide stereo chorus, radio-ready mix"
   ].filter(Boolean).join(", ");
 
@@ -1273,7 +1389,8 @@ function spBuild(regenLyricsOnly){
     `Vocal formation : ${SP_SIZE_JP[SP.mode]}（${mem.length}名）`,
     ...mem.map((n,i)=>`  ${i===0?"Lead ":"Sub  "}${n}（${MEMBERS[n].role}） : ${SP_VOX[n].jp} / ${SP_VOX[n].en}`),
     "",
-    `Arrangement : ${gi.inst}`,
+    `Arrangement : ${instEn}`,
+    ...(picked.length?["Instruments (指定) : "+picked.join("・")]:[]),
     "Chorus      : layered unison by all selected members, wide stereo double-track",
     "Structure   : "+SP_FORM[$("#sp-form").value].map(f=>f[0]).join(" → "),
     "Production  : clean modern J-pop mix, vocals forward, no clipping",
@@ -1323,6 +1440,20 @@ function spBuild(regenLyricsOnly){
     for(const n of order){ if(SP.members.length>=max) break; if(!SP.members.includes(n)) SP.members.push(n); }
     spSync();
   };
+  const mkInst=(host,dict,key,cls)=>{
+    const h=$(host); if(!h)return;
+    Object.entries(dict).forEach(([name,inf])=>{
+      const b=document.createElement("button"); b.className="chip "+cls; b.dataset.name=name;
+      b.innerHTML=`<span class="dot" style="background:${inf.c}"></span>${name}`;
+      b.onclick=()=>{ const i=SP.inst[key].indexOf(name);
+        if(i<0)SP.inst[key].push(name); else SP.inst[key].splice(i,1); spSyncInst(); };
+      h.appendChild(b);
+    });
+  };
+  mkInst("#spi-band",BAND,"band",""); mkInst("#spi-waga",WAGA,"waga","a");
+  mkInst("#spi-orch",ORCH,"orch","a"); mkInst("#spi-mand",MAND,"mand","v");
+  $("#spi-clear").onclick=()=>{ SP.inst={band:[],waga:[],orch:[],mand:[]}; spSyncInst(); toast("楽器指定を外しました"); };
+
   $("#sp-gen").onclick=()=>{ spBuild(); toast("プロンプトを作りました"); };
   $("#sp-re").onclick=()=>{ spBuild(true); toast("歌詞を作り直しました"); };
   $("#sp-rand").onclick=()=>{
@@ -1338,8 +1469,16 @@ function spBuild(regenLyricsOnly){
     if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>toast("コピーしました"),()=>toast("選択してコピーしてください"));
     else toast("選択してコピーしてください");
   });
-  spSync();
+  spSync(); spSyncInst();
 })();
+function spSyncInst(){
+  const map={"#spi-band":"band","#spi-waga":"waga","#spi-orch":"orch","#spi-mand":"mand"};
+  Object.entries(map).forEach(([sel,key])=>{
+    $$(sel+" .chip").forEach(b=>b.classList.toggle("on",SP.inst[key].includes(b.dataset.name)));
+  });
+  const n=SP.inst.band.length+SP.inst.waga.length+SP.inst.orch.length+SP.inst.mand.length;
+  const e=$("#spi-cnt"); if(e) e.textContent=n?(n+" 種を指定中"):"ジャンル既定";
+}
 function spSync(){
   $$("#sp-members .chip").forEach(b=>b.classList.toggle("on",SP.members.includes(b.dataset.name)));
   $("#sp-cnt").textContent=SP.members.length+" / "+SP_SIZE[SP.mode]+" 選択中";
@@ -1381,6 +1520,7 @@ function aiPayload(){
     meter:$("#sp-meter").value, formation:SP_SIZE_JP[SP.mode], members:mem,
     structure:SP_FORM[$("#sp-form").value].map(f=>f[0]),
     lyrics:$("#sp-lyrics").textContent, style:$("#sp-style").textContent,
+    instruments:[].concat(SP.inst.band,SP.inst.waga,SP.inst.orch,SP.inst.mand),
     negative:$("#sp-neg").value.trim()
   };
 }

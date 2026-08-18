@@ -416,6 +416,20 @@ textarea{resize:vertical}
           </div>
 
           <div class="card" style="margin-bottom:12px">
+            <h4>楽器指定<span class="cnt" id="spi-cnt"></span></h4>
+            <p class="hint" style="margin:-4px 0 8px">選ばなければジャンル既定の編成が入ります。</p>
+            <span class="hint" style="display:block;margin-bottom:5px">通常楽器</span>
+            <div class="chips" id="spi-band" style="margin-bottom:10px"></div>
+            <span class="hint" style="display:block;margin-bottom:5px">和楽器</span>
+            <div class="chips" id="spi-waga" style="margin-bottom:10px"></div>
+            <span class="hint" style="display:block;margin-bottom:5px">オーケストラ</span>
+            <div class="chips" id="spi-orch" style="margin-bottom:10px"></div>
+            <span class="hint" style="display:block;margin-bottom:5px">マンドリン</span>
+            <div class="chips" id="spi-mand" style="margin-bottom:10px"></div>
+            <button class="btn wide" id="spi-clear">楽器指定をすべて外す</button>
+          </div>
+
+          <div class="card" style="margin-bottom:12px">
             <h4>Structure</h4>
             <label class="f"><span>構成</span><select id="sp-form">
               <option value="std">標準（イントロ〜Aメロ〜サビ〜落ちサビ〜大サビ）</option>
@@ -538,7 +552,8 @@ textarea{resize:vertical}
     <label class="f"><span>歌唱モード</span><select id="f-vmode"><option value="solo">ソロ</option><option value="duet">デュエット</option><option value="trio">トリオ</option><option value="all">全員</option></select></label>
     <div class="chips" id="f-members"></div>
   </div>
-  <div class="card"><h4>Band<span class="cnt" id="c-band"></span></h4><div class="chips" id="f-band"></div></div>
+  <div class="card"><h4>通常楽器<span class="cnt" id="c-band"></span></h4><div class="chips" id="f-band"></div></div>
+  <div class="card"><h4>和楽器<span class="cnt" id="c-waga"></span></h4><div class="chips" id="f-waga"></div></div>
   <div class="card"><h4>Orchestra<span class="cnt" id="c-orch"></span></h4><div class="chips" id="f-orch"></div></div>
   <div class="card"><h4>Mandolin<span class="cnt" id="c-mand"></span></h4><div class="chips" id="f-mand"></div></div>
   <button class="btn wide" id="btn-random" style="margin-bottom:9px">おまかせで埋める</button>

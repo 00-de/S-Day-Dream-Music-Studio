@@ -136,6 +136,7 @@ function buildTask(task, p) {
 テーマ: ${p.theme || "指定なし"}
 入れたい言葉: ${(p.words || []).join("、") || "なし"}
 ジャンル: ${p.genre || ""} ／ 雰囲気: ${p.mood || ""}
+使用楽器: ${(p.instruments || []).join("、") || "ジャンル既定"}
 テンポ: ${p.bpm || ""}BPM ／ 拍子: ${p.meter || "4/4"} ／ キー: ${p.key || ""}
 言語: ${p.lang === "en" ? "英語" : p.lang === "mix" ? "日本語（サビの一部だけ英語）" : "日本語"}
 歌唱編成: ${p.formation || ""}（${mem}）
@@ -175,6 +176,7 @@ JSON で {"titles":["…","…"]} の形だけを返してください。`,
 現在の下書き: ${p.style || ""}
 ジャンル: ${p.genre || ""} ／ 雰囲気: ${p.mood || ""} ／ ${p.bpm || ""}BPM ／ ${p.meter || ""} ／ key ${p.key || ""}
 編成: ${p.formation || ""}（${mem}）
+使用楽器: ${(p.instruments || []).join("、") || "ジャンル既定"}
 避けたい要素: ${p.negative || "なし"}
 スタイル指示文だけを1行で返してください。`,
         json: false
@@ -188,6 +190,7 @@ Takagi（経営・公開計画）、Ota（制作・歌詞と構成）、Nakao（
 
 曲名: ${p.title || "(未定)"}
 テーマ: ${p.theme || ""} ／ ジャンル: ${p.genre || ""} ／ 雰囲気: ${p.mood || ""}
+使用楽器: ${(p.instruments || []).join("、") || "ジャンル既定"}
 テンポ: ${p.bpm || ""}BPM ／ ${p.meter || ""} ／ 編成: ${p.formation || ""}（${mem}）
 
 歌詞:
