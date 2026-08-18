@@ -4,16 +4,18 @@
    APIキーはこのサーバー側だけで扱い、ブラウザには渡しません。
 
    Vercel の Settings → Environment Variables に入れる名前:
-     GROQ_API_KEY     （推奨・無料枠あり・速い）
-     GEMINI_API_KEY
-     OPENAI_API_KEY
+     GROQ_API_KEY      （無料枠あり・速い）
+     GEMINI_API_KEY    （無料枠あり）
+     OPENAI_API_KEY    （有料）
+     ANTHROPIC_API_KEY （Claude・有料・日本語の作詞が得意）
    1つでも入っていれば動きます。
    ========================================================== */
 
 const MODELS = {
   groq:   process.env.GROQ_MODEL   || "llama-3.3-70b-versatile",
   openai: process.env.OPENAI_MODEL || "gpt-4o-mini",
-  gemini: process.env.GEMINI_MODEL || "gemini-2.0-flash"
+  gemini: process.env.GEMINI_MODEL || "gemini-2.0-flash",
+  claude: process.env.CLAUDE_MODEL || "claude-sonnet-5"
 };
 
 function available() {
@@ -21,6 +23,7 @@ function available() {
   if (process.env.GROQ_API_KEY) a.push("groq");
   if (process.env.GEMINI_API_KEY) a.push("gemini");
   if (process.env.OPENAI_API_KEY) a.push("openai");
+  if (process.env.ANTHROPIC_API_KEY) a.push("claude");
   return a;
 }
 
@@ -73,6 +76,28 @@ async function callGemini(system, user, json) {
   return d.candidates?.[0]?.content?.parts?.map(p => p.text).join("") || "";
 }
 
+async function callClaude(system, user, json) {
+  // Claude には JSON モードが無いので、返答の冒頭を「{」で始めさせて確実にJSONにする
+  const messages = [{ role: "user", content: user }];
+  if (json) messages.push({ role: "assistant", content: "{" });
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": process.env.ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01"
+    },
+    body: JSON.stringify({
+      model: MODELS.claude, max_tokens: 2000, temperature: 1,
+      system, messages
+    })
+  });
+  if (!r.ok) throw new Error("claude " + r.status + " " + (await r.text()).slice(0, 300));
+  const d = await r.json();
+  const text = (d.content || []).filter(c => c.type === "text").map(c => c.text).join("");
+  return json ? "{" + text : text;
+}
+
 async function ask(preferred, system, user, json) {
   const list = available();
   if (!list.length) { const e = new Error("APIキーが未設定です"); e.code = "NO_KEY"; throw e; }
@@ -81,7 +106,8 @@ async function ask(preferred, system, user, json) {
   let last;
   for (const p of order) {
     try {
-      const fn = p === "groq" ? callGroq : p === "openai" ? callOpenAI : callGemini;
+      const fn = p === "groq" ? callGroq : p === "openai" ? callOpenAI
+               : p === "claude" ? callClaude : callGemini;
       const text = await fn(system, user, json);
       if (text && text.trim()) return { provider: p, model: MODELS[p], text: text.trim() };
       last = new Error(p + " から空の応答");

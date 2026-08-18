@@ -1,6 +1,6 @@
 SDayDream Music Studio — Phase 1.1（制作画面リニューアル版）
 
-【中身】v2.0（Phase 3：AI連携版）
+【中身】v2.1（Phase 3：AI連携版／Claude対応）
 index.html … 画面
 app.js     … 作曲・編曲・音源・書き出しエンジン
 

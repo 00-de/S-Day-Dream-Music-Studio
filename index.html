@@ -431,7 +431,8 @@ textarea{resize:vertical}
               <option value="">自動（使えるものを順に）</option>
               <option value="groq">Groq</option>
               <option value="gemini">Gemini</option>
-              <option value="openai">OpenAI</option></select></label>
+              <option value="openai">OpenAI</option>
+              <option value="claude">Claude</option></select></label>
             <div class="chips" style="gap:6px">
               <button class="btn" id="ai-lyrics">歌詞をAIで書く</button>
               <button class="btn" id="ai-polish">歌詞を推敲</button>
@@ -496,7 +497,7 @@ textarea{resize:vertical}
           <h4>External Services</h4>
           <p class="hint" id="set-ai-state">接続確認中…</p>
           <p class="hint" style="margin-top:8px">歌詞アシストと AI社員レビューは <span class="tag live">Phase 3</span> として動作します。Vercel の Settings → Environment Variables に
-          <b class="mono">GROQ_API_KEY</b> / <b class="mono">GEMINI_API_KEY</b> / <b class="mono">OPENAI_API_KEY</b> のいずれかを入れてください。
+          <b class="mono">GROQ_API_KEY</b> / <b class="mono">GEMINI_API_KEY</b> / <b class="mono">OPENAI_API_KEY</b> / <b class="mono">ANTHROPIC_API_KEY</b> のいずれかを入れてください。
           キーはサーバー側だけで扱い、ブラウザには渡していません。<br>
           歌声合成、画像動画生成、YouTube 投稿は <span class="tag wip">Phase 4 / 5</span> です。</p>
           <button class="btn" id="set-ai-check" style="margin-top:9px">接続を確認</button>
