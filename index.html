@@ -405,14 +405,19 @@ textarea{resize:vertical}
 
           <div class="card" style="margin-bottom:12px">
             <h4>Vocal<span class="cnt" id="sp-cnt"></span></h4>
+            <label class="f"><span>ユニット</span><select id="sp-unit">
+              <option value="main">DayDream＋ 本体（6名）</option>
+              <option value="midnight">深夜ユニット（5名）</option>
+              <option value="both">全メンバー（11名）</option></select></label>
             <label class="f"><span>歌唱編成</span><select id="sp-mode">
               <option value="solo">ソロ（1人）</option>
               <option value="duet" selected>デュエット（2人）</option>
               <option value="trio">トリオ（3人）</option>
               <option value="fourth">フォース（4人）</option>
-              <option value="all">全員（6人）</option></select></label>
+              <option value="all">全員</option></select></label>
             <div class="chips" id="sp-members"></div>
-            <p class="hint" style="margin-top:9px">先に選んだ人がメインボーカルになります。サビは選んだ全員のユニゾンとして書き出します。</p>
+            <p class="hint" id="sp-unitnote" style="margin-top:9px;color:var(--cyan)"></p>
+            <p class="hint" style="margin-top:6px">先に選んだ人がメインボーカルになります。サビは選んだ全員のユニゾンとして書き出します。</p>
           </div>
 
           <div class="card" style="margin-bottom:12px">
@@ -549,7 +554,14 @@ textarea{resize:vertical}
   <div class="card"><h4>Preset</h4><div class="chips" id="f-preset"></div></div>
   <div class="card">
     <h4>Vocal<span class="cnt" id="c-vocal"></span></h4>
-    <label class="f"><span>歌唱モード</span><select id="f-vmode"><option value="solo">ソロ</option><option value="duet">デュエット</option><option value="trio">トリオ</option><option value="all">全員</option></select></label>
+    <label class="f"><span>ユニット</span><select id="f-unit">
+      <option value="main">DayDream＋ 本体（6名）</option>
+      <option value="midnight">深夜ユニット（5名）</option>
+      <option value="both">全メンバー（11名）</option></select></label>
+    <label class="f"><span>歌唱モード</span><select id="f-vmode">
+      <option value="solo">ソロ</option><option value="duet">デュエット</option>
+      <option value="trio">トリオ</option><option value="fourth">フォース</option>
+      <option value="all">全員</option></select></label>
     <div class="chips" id="f-members"></div>
   </div>
   <div class="card"><h4>通常楽器<span class="cnt" id="c-band"></span></h4><div class="chips" id="f-band"></div></div>

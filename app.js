@@ -16,8 +16,33 @@ const MEMBERS = {
   "葵":{role:"Guitar・Vocal",     g:"🎸", color:"#35E1F5", vox:{base:5, bright:1.1, vib:5.0, breath:.18, formant:[600,1600,2700]}},
   "蓮":{role:"Guitar・Chorus",    g:"🎸", color:"#9B7BFF", vox:{base:-5,bright:.92, vib:4.2, breath:.2,  formant:[480,1380,2400]}},
   "美琴":{role:"Enka Vocal",      g:"🎙", color:"#FFC24B", vox:{base:12,bright:1.05,vib:6.6, breath:.1,  formant:[620,1500,2600], kobushi:true}},
-  "大地":{role:"Drums",           g:"🥁", color:"#7E90AC", vox:{base:-12,bright:.85,vib:3.6, breath:.24, formant:[440,1300,2300]}}
+  "大地":{role:"Drums",           g:"🥁", color:"#7E90AC", vox:{base:-12,bright:.85,vib:3.6, breath:.24, formant:[440,1300,2300]}},
+  /* ---- 深夜ユニット（DayDream Plus Midnight Unit） ---- */
+  "月宮夜空":{unit:"midnight", role:"Vocal / 深夜", g:"🌌", color:"#6C7BD9",
+    vox:{base:-7, bright:.88, vib:4.0, breath:.22, formant:[470,1350,2380]}},
+  "星野澪":{unit:"midnight", role:"Vocal / 深夜", g:"🌙", color:"#8FC7F0",
+    vox:{base:12, bright:1.15,vib:4.8, breath:.26, formant:[640,1700,2850]}},
+  "朝霧奏":{unit:"midnight", role:"Vocal / 深夜", g:"🌠", color:"#7FD9C0",
+    vox:{base:3,  bright:1.0, vib:4.4, breath:.18, formant:[560,1520,2600]}},
+  "白雪ルナ":{unit:"midnight", role:"Vocal / 深夜", g:"❄", color:"#F0D7E8",
+    vox:{base:12, bright:1.30,vib:5.4, breath:.20, formant:[700,1780,2950]}},
+  "天音雫":{unit:"midnight", role:"Vocal・Narration / 深夜", g:"💜", color:"#A98CD9",
+    vox:{base:5,  bright:.95, vib:4.0, breath:.16, formant:[580,1450,2550]}}
 };
+Object.values(MEMBERS).forEach(m=>{ if(!m.unit) m.unit="main"; });
+const UNITS = {
+  main:{ label:"DayDream＋ 本体", en:"DayDream Plus" },
+  midnight:{ label:"深夜ユニット", en:"DayDream Plus Midnight Unit" }
+};
+const unitMembers = u => Object.keys(MEMBERS).filter(n => u==="both" || MEMBERS[n].unit===u);
+
+/* 深夜ユニット共通の世界観プロンプト */
+const MIDNIGHT_WORLD = `DayDream Plus Midnight Unit, a Japanese five-member night-themed healing music group.
+The overall vocal atmosphere is warm, intimate, peaceful and emotionally comforting.
+Every member should sound unique but belong to the same nighttime world.
+The music should feel like a peaceful midnight world where listeners can relax, heal and prepare for tomorrow.
+Intimate vocals, natural Japanese pronunciation, emotional but never overly dramatic.
+Gentle breathing, soft dynamics, cinematic nighttime atmosphere.`;
 const BAND = {
   "エレキギター":{t:"egtr",c:"#FF4FA3",oct:0,g:"🎸"},"アコースティックギター":{t:"agtr",c:"#FFA65D",oct:0,g:"🪕"},
   "ベース":{t:"bass",c:"#9B7BFF",oct:-2,g:"🎻"},"ドラム":{t:"drums",c:"#7E90AC",oct:0,g:"🥁"},
@@ -69,10 +94,12 @@ const FORM = [
 
 /* ---------- 状態 ---------- */
 const S = {
-  preset:"アイドル", members:["結衣"], band:[], orch:[], waga:[], mand:[],
+  preset:"アイドル", unit:"main", members:["結衣"], band:[], orch:[], waga:[], mand:[],
   song:null, buffer:null, ctx:null, src:null, playing:false, startAt:0, offset:0,
   library:[], mixer:{}, rafT:0, _peaks:null, _peakKey:null, vizPane:"wave"
 };
+
+const VMODE_MAX={solo:1,duet:2,trio:3,fourth:4};
 
 /* ---------- ユーティリティ ---------- */
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -141,7 +168,7 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeDrawer(); });
   Object.entries(MEMBERS).forEach(([name,m])=>{
     const b=document.createElement("button");b.className="chip m";
     b.innerHTML=`<span class="dot" style="background:${m.color}"></span>${name}`;
-    b.dataset.name=name;b.title=m.role;b.onclick=()=>toggleMember(name);mc.appendChild(b);
+    b.dataset.name=name;b.dataset.unit=m.unit;b.title=m.role;b.onclick=()=>toggleMember(name);mc.appendChild(b);
   });
   const mk=(host,dict,cls,key)=>{
     const h=$(host);
@@ -158,19 +185,26 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeDrawer(); });
   applyPreset("アイドル");
 })();
 
+function studioMax(){
+  const pool=unitMembers(S.unit);
+  return Math.min(VMODE_MAX[$("#f-vmode").value]||pool.length, pool.length);
+}
+function studioFill(){
+  const pool=unitMembers(S.unit), max=studioMax();
+  S.members=S.members.filter(n=>pool.includes(n));
+  while(S.members.length>max) S.members.pop();
+  const order=S.unit==="midnight"?["星野澪","月宮夜空","天音雫","白雪ルナ","朝霧奏"]:["結衣","悠真","葵","蓮","美琴","大地"];
+  for(const n of order.concat(pool)){ if(S.members.length>=max) break; if(!S.members.includes(n)) S.members.push(n); }
+  if(!S.members.length) S.members=[pool[0]];
+}
 function toggleMember(name){
-  const max={solo:1,duet:2,trio:3,all:6}[$("#f-vmode").value];
-  const i=S.members.indexOf(name);
+  const max=studioMax(), i=S.members.indexOf(name);
   if(i>=0){ if(S.members.length>1) S.members.splice(i,1); }
   else { S.members.push(name); while(S.members.length>max) S.members.shift(); }
   syncChips();
 }
-$("#f-vmode").onchange=()=>{
-  const v=$("#f-vmode").value, max={solo:1,duet:2,trio:3,all:6}[v];
-  if(v==="all") S.members=Object.keys(MEMBERS);
-  while(S.members.length>max) S.members.pop();
-  syncChips();
-};
+$("#f-vmode").onchange=()=>{ studioFill(); syncChips(); };
+$("#f-unit").onchange=()=>{ S.unit=$("#f-unit").value; S.members=[]; studioFill(); syncChips(); };
 function applyPreset(name){
   S.preset=name; const p=PRESETS[name];
   S.band=[...p.band]; S.waga=[...(p.waga||[])]; S.orch=[...p.orch]; S.mand=[...p.mand];
@@ -180,7 +214,9 @@ function applyPreset(name){
 }
 function syncChips(){
   $$("#f-preset .chip").forEach(b=>b.classList.toggle("on",b.textContent===S.preset));
-  $$("#f-members .chip").forEach(b=>b.classList.toggle("on",S.members.includes(b.dataset.name)));
+  {const pool=unitMembers(S.unit);
+   $$("#f-members .chip").forEach(b=>{ b.style.display=pool.includes(b.dataset.name)?"":"none";
+     b.classList.toggle("on",S.members.includes(b.dataset.name)); });}
   $$("#f-band .chip").forEach(b=>b.classList.toggle("on",S.band.includes(b.dataset.name)));
   $$("#f-waga .chip").forEach(b=>b.classList.toggle("on",S.waga.includes(b.dataset.name)));
   $$("#f-orch .chip").forEach(b=>b.classList.toggle("on",S.orch.includes(b.dataset.name)));
@@ -194,7 +230,7 @@ function renderPickSummary(){
     +line("BAND",S.band.join("・"))+line("和楽器",S.waga.join("・"))
     +line("ORCH",S.orch.join("・"))+line("MAND",S.mand.join("・"));
   const set=(id,n,max)=>{const e=$(id); if(e) e.textContent=n+(max?" / "+max:"")+" 選択中";};
-  set("#c-vocal",S.members.length,{solo:1,duet:2,trio:3,all:6}[$("#f-vmode").value]);
+  set("#c-vocal",S.members.length,studioMax());
   set("#c-band",S.band.length); set("#c-waga",S.waga.length);
   set("#c-orch",S.orch.length); set("#c-mand",S.mand.length);
 }
@@ -1225,7 +1261,32 @@ const SP_VOX = {
   "葵":{en:"husky male vocal with edge, guitar-driven delivery", jp:"かすれ気味で芯のある男性ボーカル、ギター担当"},
   "蓮":{en:"soft male harmony vocal, airy backing lines", jp:"やわらかい男性ハーモニー、コーラス担当"},
   "美琴":{en:"enka-style female vocal, deep vibrato and kobushi ornamentation", jp:"演歌調の女性ボーカル、深いビブラートとこぶし"},
-  "大地":{en:"low male backing shouts and chants, drummer", jp:"低音の掛け声とコーラス、ドラム担当"}
+  "大地":{en:"low male backing shouts and chants, drummer", jp:"低音の掛け声とコーラス、ドラム担当"},
+  "月宮夜空":{en:"calm warm male voice, medium-low range, reassuring midnight radio atmosphere",
+    jp:"落ち着いた温かい男性の声、中低音、深夜ラジオのような安心感",
+    sig:"Good evening. You worked hard today.",
+    full:`Japanese male vocalist, 20 years old. A calm, warm, reassuring voice with a gentle and mature tone. Medium-low vocal range, smooth and clear pronunciation, soft breathy texture, emotionally controlled but deeply expressive. His voice feels like a quiet midnight radio host speaking to listeners after a long day. Never aggressive or overly theatrical. Relaxed pacing, intimate delivery, peaceful atmosphere, gentle emotional warmth. Suitable for night-themed electronic music, ambient pop, chill synthwave, healing music and emotional ballads.
+Character voice identity: calm, good listener, safe and comforting presence.`},
+  "星野澪":{en:"soft airy female voice, clear and gentle, soothing and emotionally comforting",
+    jp:"やわらかく息を含んだ女性の声、澄んでいて心を落ち着かせる",
+    sig:"If you cannot sleep, let's talk together.",
+    full:`Japanese female vocalist, 19 years old. A soft, clear and gentle singing voice with a soothing, airy tone. Light and delicate vocal texture, warm breathiness, smooth high notes, intimate and emotionally comforting delivery. Her voice feels like moonlight shining quietly through a window on a sleepless night. Never overly powerful or aggressive. Gentle dynamics, soft pronunciation, tender emotional expression, peaceful and healing atmosphere.
+Character voice identity: kind, comforting, emotionally warm and protective.`},
+  "朝霧奏":{en:"calm and refreshing voice, warm mid-range, gentle optimism and quiet encouragement",
+    jp:"落ち着いた爽やかな声、温かい中音域、静かに背中を押す",
+    sig:"There is no need to rush. Let's move forward one step at a time.",
+    full:`Japanese vocalist, 19 years old. A calm, clear and refreshing voice with gentle emotional strength. Natural mid-range, warm tone, slightly soft texture, clean pronunciation and relaxed delivery. The voice feels reassuring and positive, like walking forward slowly through the morning mist after a difficult night. Emotional but never dramatic, encouraging but never forceful. Smooth phrasing, peaceful confidence and gentle optimism.
+Character voice identity: calm, positive and quietly encouraging.`},
+  "白雪ルナ":{en:"bright soft female voice, sweet and friendly, warm and naturally charming",
+    jp:"明るくやわらかい女性の声、甘く親しみやすい",
+    sig:"Let's take a little break with something warm.",
+    full:`Japanese female vocalist, 18 years old. A bright, soft and sweet voice with a gentle natural charm. Clear mid-to-high vocal range, slightly airy texture, warm pronunciation and an innocent, friendly emotional expression. Her voice feels like a warm drink on a quiet winter night. Natural, relaxed and approachable rather than overly polished or theatrical. Soft smiles can be felt in the vocal delivery.
+Character voice identity: gentle, slightly innocent, naturally charming and comforting.`},
+  "天音雫":{en:"calm intelligent female voice, warm slightly deep tone, elegant narration and emotional expression",
+    jp:"落ち着いた知的な女性の声、温かくやや低め、語りにも向く",
+    sig:"You did your best today. Give yourself a little praise.",
+    full:`Japanese female vocalist and narrator, 20 years old. A calm, intelligent and emotionally rich voice with a warm, slightly deep tone. Clear pronunciation, slow and comfortable pacing, gentle breath control and a peaceful presence. Her voice is especially suitable for narration, spoken word, bedtime stories, ambient music and emotional ballads. The delivery feels thoughtful, elegant and deeply reassuring, like someone quietly speaking to you at the end of a long day.
+Character voice identity: intelligent, calm, thoughtful and compassionate.`}
 };
 const SP_GENRE = {
   "アイドルポップ":{en:"Japanese idol pop, J-pop, upbeat group vocals", inst:"electric guitar, bass, drums, bright synth keys"},
@@ -1241,14 +1302,19 @@ const SP_GENRE = {
   "映画音楽":{en:"cinematic score with vocals, epic build", inst:"strings, horns, choir, timpani, piano"},
   "和ロック":{en:"Japanese wa-rock, traditional instruments over rock band", inst:"shakuhachi, tsugaru shamisen, taiko drums, distorted electric guitar, bass"},
   "純邦楽":{en:"traditional Japanese music, sparse and meditative", inst:"shakuhachi, koto, shamisen, tsuzumi hand drum, rin bell"},
+  "深夜チル":{en:"late night chill J-pop, lo-fi warmth, intimate and relaxed", inst:"electric piano, soft synth pad, muted bass, brushed drums, vinyl texture"},
+  "アンビエントポップ":{en:"ambient pop, spacious and floating, healing atmosphere", inst:"warm synth pad, felt piano, soft strings, subtle percussion"},
+  "シンセウェイブ":{en:"chill synthwave, nocturnal and dreamy", inst:"analog synth pad, retro lead, sub bass, gated drums"},
+  "ヒーリング":{en:"healing music with vocals, calm and restorative", inst:"felt piano, warm pad, gentle strings, soft bells"},
   "ライブアンセム":{en:"live anthem J-pop, stadium energy, crowd chants", inst:"electric guitar, bass, drums, brass stabs, synth"}
 };
 const SP_MOOD = {"疾走":"driving, energetic, forward-moving","やさしい":"gentle, warm, tender",
   "壮大":"grand, sweeping, cinematic","切ない":"bittersweet, wistful, melancholic","祝祭":"celebratory, festive, triumphant"};
-const SP_SIZE = {solo:1,duet:2,trio:3,fourth:4,all:6};
+const SP_SIZE_BASE = {solo:1,duet:2,trio:3,fourth:4};
+const spMax = () => SP_SIZE_BASE[SP.mode] || unitMembers(SP.unit).length;
 const SP_SIZE_JP = {solo:"ソロ",duet:"デュエット",trio:"トリオ",fourth:"フォース",all:"全員"};
 
-const SP = { members:["結衣","悠真"], mode:"duet", lyrics:"", titles:[], inst:{band:[],waga:[],orch:[],mand:[]} };
+const SP = { unit:"main", members:["結衣","悠真"], mode:"duet", lyrics:"", titles:[], inst:{band:[],waga:[],orch:[],mand:[]} };
 
 /* ---------- 語彙バンク（歌詞・タイトルの下書き生成用） ---------- */
 const W = {
@@ -1365,20 +1431,23 @@ function spBuild(regenLyricsOnly){
 
   const langEn={ja:"Japanese lyrics",mix:"Japanese lyrics with English hook",en:"English lyrics"}[lang];
   const voxEn=mem.map(n=>SP_VOX[n].en).join("; ");
-  const ens={1:"solo vocal",2:"male-female duet, alternating lines",3:"three-part vocal trio",
-    4:"four-part vocal arrangement",6:"six-member group with layered unison chorus"}[mem.length]||"group vocal";
+  const isNight=mem.some(n=>MEMBERS[n].unit==="midnight");
+  const ens={1:"solo vocal",2:"duet, alternating lines",3:"three-part vocal trio",
+    4:"four-part vocal arrangement",5:"five-part vocal ensemble",
+    6:"six-member group with layered unison chorus"}[mem.length]||"group vocal";
 
   const picked=[].concat(SP.inst.band,SP.inst.waga,SP.inst.orch,SP.inst.mand);
   const instEn=picked.length?picked.map(n=>INST_EN[n]||n).join(", "):gi.inst;
   $("#sp-style").textContent=[
     gi.en, mood?SP_MOOD[mood]:"", langEn, ens,
+    isNight?"intimate midnight healing atmosphere, gentle breathing, soft dynamics":"",
     instEn, `${bpm} BPM`, `key of ${key} ${scale}`, `${meter} time`,
     "clean modern production, wide stereo chorus, radio-ready mix"
   ].filter(Boolean).join(", ");
 
   $("#sp-dd").textContent=[
     "=== DayDream＋ SONG BRIEF ===",
-    `Project : DayDream Plus (DayDream＋) original song`,
+    `Project : ${UNITS[SP.unit]?UNITS[SP.unit].en:"DayDream Plus"} original song`,
     `Title   : ${$("#sp-title").value.trim()||"(未定 / タイトル案から選択)"}`,
     `Theme   : ${theme||"(未設定)"}${words.length?" / keywords: "+words.join(", "):""}`,
     `Genre   : ${g} — ${gi.en}`,
@@ -1386,8 +1455,16 @@ function spBuild(regenLyricsOnly){
     `Tempo   : ${bpm} BPM / ${meter} / key of ${key} ${scale}`,
     `Language: ${langEn}`,
     "",
+    `Unit            : ${UNITS[SP.unit]?UNITS[SP.unit].label:""}`,
     `Vocal formation : ${SP_SIZE_JP[SP.mode]}（${mem.length}名）`,
     ...mem.map((n,i)=>`  ${i===0?"Lead ":"Sub  "}${n}（${MEMBERS[n].role}） : ${SP_VOX[n].jp} / ${SP_VOX[n].en}`),
+    "",
+    "--- Voice Identity Prompt ---",
+    ...mem.map(n=>{
+      const v=SP_VOX[n];
+      return `[${n}]\n${v.full||v.en}${v.sig?"\nSignature feeling: “"+v.sig+"”":""}`;
+    }),
+    ...(isNight?["","--- Midnight Unit World ---",MIDNIGHT_WORLD]:[]),
     "",
     `Arrangement : ${instEn}`,
     ...(picked.length?["Instruments (指定) : "+picked.join("・")]:[]),
@@ -1421,25 +1498,28 @@ function spBuild(regenLyricsOnly){
 
   const mc=$("#sp-members");
   Object.entries(MEMBERS).forEach(([name,m])=>{
-    const b=document.createElement("button"); b.className="chip m"; b.dataset.name=name; b.title=m.role;
+    const b=document.createElement("button"); b.className="chip m"; b.dataset.name=name;
+    b.dataset.unit=m.unit; b.title=m.role;
     b.innerHTML=`<span class="dot" style="background:${m.color}"></span>${name}`;
     b.onclick=()=>{
-      const max=SP_SIZE[SP.mode], i=SP.members.indexOf(name);
+      const max=spMax(), i=SP.members.indexOf(name);
       if(i>=0){ if(SP.members.length>1) SP.members.splice(i,1); }
       else { SP.members.push(name); while(SP.members.length>max) SP.members.shift(); }
       spSync();
     };
     mc.appendChild(b);
   });
-  $("#sp-mode").onchange=()=>{
-    SP.mode=$("#sp-mode").value;
-    const max=SP_SIZE[SP.mode];
-    if(SP.mode==="all") SP.members=Object.keys(MEMBERS);
-    while(SP.members.length>max) SP.members.pop();
-    const order=["結衣","悠真","葵","蓮","美琴","大地"];
-    for(const n of order){ if(SP.members.length>=max) break; if(!SP.members.includes(n)) SP.members.push(n); }
-    spSync();
+  $("#sp-unit").onchange=()=>{
+    SP.unit=$("#sp-unit").value; SP.members=[]; spFill(); spSync();
+    if(SP.unit==="midnight"){                    // 深夜ユニットに合う既定へ寄せる
+      $("#sp-genre").value="深夜チル"; $("#sp-mood").value="やさしい";
+      $("#sp-bpm").value=84; $("#sp-vbpm").textContent="84";
+      $("#sp-scale").value="minor"; $("#sp-form").value="ballad";
+      $("#sp-neg").value="aggressive drums, heavy distortion, shouting";
+      toast("深夜ユニット向けの設定にしました");
+    }
   };
+  $("#sp-mode").onchange=()=>{ SP.mode=$("#sp-mode").value; spFill(); spSync(); };
   const mkInst=(host,dict,key,cls)=>{
     const h=$(host); if(!h)return;
     Object.entries(dict).forEach(([name,inf])=>{
@@ -1471,6 +1551,16 @@ function spBuild(regenLyricsOnly){
   });
   spSync(); spSyncInst();
 })();
+function spFill(){
+  const pool=unitMembers(SP.unit), max=Math.min(spMax(),pool.length);
+  SP.members=SP.members.filter(n=>pool.includes(n));
+  while(SP.members.length>max) SP.members.pop();
+  const order=SP.unit==="midnight"
+    ? ["星野澪","月宮夜空","天音雫","白雪ルナ","朝霧奏"]
+    : ["結衣","悠真","葵","蓮","美琴","大地"];
+  for(const n of order.concat(pool)){ if(SP.members.length>=max) break; if(!SP.members.includes(n)) SP.members.push(n); }
+  if(!SP.members.length) SP.members=[pool[0]];
+}
 function spSyncInst(){
   const map={"#spi-band":"band","#spi-waga":"waga","#spi-orch":"orch","#spi-mand":"mand"};
   Object.entries(map).forEach(([sel,key])=>{
@@ -1480,8 +1570,17 @@ function spSyncInst(){
   const e=$("#spi-cnt"); if(e) e.textContent=n?(n+" 種を指定中"):"ジャンル既定";
 }
 function spSync(){
-  $$("#sp-members .chip").forEach(b=>b.classList.toggle("on",SP.members.includes(b.dataset.name)));
-  $("#sp-cnt").textContent=SP.members.length+" / "+SP_SIZE[SP.mode]+" 選択中";
+  const pool=unitMembers(SP.unit);
+  $$("#sp-members .chip").forEach(b=>{
+    const inPool=pool.includes(b.dataset.name);
+    b.style.display=inPool?"":"none";
+    b.classList.toggle("on",SP.members.includes(b.dataset.name));
+  });
+  $("#sp-cnt").textContent=SP.members.length+" / "+Math.min(spMax(),pool.length)+" 選択中";
+  const u=$("#sp-unitnote");
+  if(u) u.textContent=SP.unit==="midnight"
+    ? "深夜ユニットを選ぶと、5人共通の世界観プロンプトも専用プロンプトに入ります。"
+    : "";
 }
 
 /* ==========================================================
